@@ -1,0 +1,1 @@
+{"paths":{"modified":{"/pets":{"operations":{"modified":{"GET":{"tags":{"added":["catalog"]},"operationID":{"from":"listPets","to":"listAllPets"},"deprecated":{"from":false,"to":true}}}}}}}}

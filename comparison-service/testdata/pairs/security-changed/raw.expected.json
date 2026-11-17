@@ -1,0 +1,1 @@
+{"security":{"added":[{"index":0,"schemes":{"bearer":[]}}],"deleted":[{"index":0,"schemes":{"apiKey":[]}}]},"components":{"securitySchemes":{"added":["bearer"]}}}

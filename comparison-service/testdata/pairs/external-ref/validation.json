@@ -1,0 +1,10 @@
+{
+    "base":  {
+                 "exit":  123,
+                 "output":  "oasdiff.exe : Error: failed to load original spec from \"base.yaml\": encountered disallowed external reference: \r\n\"./other.yaml#/components/schemas/Other\"\r\nAt line:1 char:213\r\n+ ... e; $bOut = (\u0026 $o validate base.yaml -f json --allow-external-refs=fal ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (Error: failed t.../schemas/Other\":String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+             },
+    "target":  {
+                   "exit":  123,
+                   "output":  "oasdiff.exe : Error: failed to load original spec from \"target.yaml\": encountered disallowed external reference: \r\n\"./other.yaml#/components/schemas/Other\"\r\nAt line:1 char:333\r\n+ ... E; $tOut = (\u0026 $o validate target.yaml -f json --allow-external-refs=f ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (Error: failed t.../schemas/Other\":String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+               }
+}

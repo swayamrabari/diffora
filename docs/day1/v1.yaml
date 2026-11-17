@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Pets API
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      summary: List pets
+      description: Returns all pets.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pets'
+  /pets/{petId}:
+    get:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+    delete:
+      responses:
+        '204':
+          description: Deleted
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [available, sold]
+    Pets:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pet'

@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(320)
+  name         String    @db.VarChar(100)
+  passwordHash String    @db.VarChar(60)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  projects     Project[]
+}
+
+model Project {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @db.Uuid
+  name        String       @db.VarChar(100)
+  description String?      @db.VarChar(500)
+  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions    ApiVersion[]
+  comparisons Comparison[]
+
+  @@index([userId, updatedAt])
+}
+
+model ApiVersion {
+  id               String       @id @default(uuid()) @db.Uuid
+  projectId        String       @db.Uuid
+  label            String       @db.VarChar(50)
+  labelNormalized  String       @db.VarChar(50)
+  description      String?      @db.VarChar(500)
+  openapiVersion   String       @db.VarChar(20)
+  specFormat       String       @db.VarChar(5)
+  originalFilename String       @db.VarChar(255)
+  fileSize         Int
+  checksum         String       @db.VarChar(64)
+  title            String       @db.VarChar(300)
+  content          String       @db.Text
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  baseOf           Comparison[] @relation("baseVersion")
+  targetOf         Comparison[] @relation("targetVersion")
+
+  @@unique([projectId, labelNormalized])
+  @@index([projectId, createdAt])
+  @@index([projectId, checksum])
+}
+
+model Comparison {
+  id                String     @id @default(uuid()) @db.Uuid
+  projectId         String     @db.Uuid
+  baseVersionId     String     @db.Uuid
+  targetVersionId   String     @db.Uuid
+  status            String     @db.VarChar(10)
+  engineVersion     String     @db.VarChar(64)
+  durationMs        Int        @default(0)
+  rawDiffText       String?    @db.Text
+  summary           Json?
+  totalChangelog    Int        @default(0)
+  totalBreaking     Int        @default(0)
+  totalDeprecations Int        @default(0)
+  errorMessage      String?    @db.Text
+  createdAt         DateTime   @default(now()) @db.Timestamptz(3)
+  project           Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  baseVersion       ApiVersion @relation("baseVersion", fields: [baseVersionId], references: [id], onDelete: Cascade)
+  targetVersion     ApiVersion @relation("targetVersion", fields: [targetVersionId], references: [id], onDelete: Cascade)
+  findings          ComparisonFinding[]
+  deprecations      ComparisonDeprecation[]
+
+  @@index([projectId, createdAt])
+  @@index([baseVersionId])
+  @@index([targetVersionId])
+}
+
+model ComparisonFinding {
+  id           String     @id @default(uuid()) @db.Uuid
+  comparisonId String     @db.Uuid
+  kind         String     @db.VarChar(10)
+  position     Int
+  ruleId       String     @db.VarChar(160)
+  level        Int
+  levelName    String     @db.VarChar(10)
+  text         String     @db.Text
+  operation    String?    @db.VarChar(10)
+  operationId  String?    @db.VarChar(200)
+  path         String?    @db.VarChar(500)
+  section      String?    @db.VarChar(50)
+  line         Int?
+  column       Int?
+  endLine      Int?
+  endColumn    Int?
+  comparison   Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, kind, position])
+  @@index([comparisonId, kind, level])
+  @@index([comparisonId, kind, section])
+  @@index([comparisonId, kind, ruleId])
+  @@index([comparisonId, kind, operation])
+  @@index([comparisonId, kind, path])
+}
+
+model ComparisonDeprecation {
+  id              String     @id @default(uuid()) @db.Uuid
+  comparisonId    String     @db.Uuid
+  position        Int
+  pointer         String     @db.Text
+  path            String?    @db.VarChar(500)
+  method          String?    @db.VarChar(10)
+  oldValue        Json?
+  newValue        Json?
+  oldValuePresent Boolean    @default(false)
+  newValuePresent Boolean    @default(false)
+  comparison      Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, position])
+  @@index([comparisonId, path])
+  @@index([comparisonId, method])
+}

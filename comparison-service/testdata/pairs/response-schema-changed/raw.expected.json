@@ -1,0 +1,1 @@
+{"paths":{"modified":{"/pets":{"operations":{"modified":{"GET":{"responses":{"modified":{"200":{"content":{"modified":{"application/json":{"schema":{"type":{"added":["object"],"deleted":["array"]},"items":{"schemaDeleted":true},"required":{"added":["id","name"]},"properties":{"added":["id","name","status"]}}}}}}}}}}}}}}}

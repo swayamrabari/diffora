@@ -1,0 +1,1 @@
+{"paths":{"modified":{"/pets":{"operations":{"modified":{"GET":{"responses":{"modified":{"200":{"headers":{"modified":{"x-rate-limit":{"schema":{"type":{"added":["string"],"deleted":["integer"]}}}}}}}}}}}}}}}

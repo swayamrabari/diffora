@@ -1,0 +1,1 @@
+{"paths":{"modified":{"/pets":{"operations":{"modified":{"GET":{"parameters":{"modified":{"query":{"limit":{"schema":{"min":{"from":1,"to":2}}}}}}}}}}}},"components":{"parameters":{"modified":{"Limit":{"schema":{"min":{"from":1,"to":2}}}}}}}

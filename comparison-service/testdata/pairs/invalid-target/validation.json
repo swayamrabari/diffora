@@ -1,0 +1,10 @@
+{
+    "base":  {
+                 "exit":  0,
+                 "output":  "[]"
+             },
+    "target":  {
+                   "exit":  102,
+                   "output":  "oasdiff.exe : Error: failed to load original spec from \"target.yaml\": failed to unmarshal data: yaml error: yaml: line \r\n2: did not find expected node content\r\nAt line:1 char:333\r\n+ ... E; $tOut = (\u0026 $o validate target.yaml -f json --allow-external-refs=f ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (Error: failed t...ed node content:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+               }
+}

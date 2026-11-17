@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: Quirks API
+  version: 1.0.0
+  x-date: 2024-02-02
+  x-flag: off
+  x-yes: no
+paths:
+  /quirks:
+    get:
+      responses:
+        200:
+          description: OK

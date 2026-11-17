@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+web/node_modules/
+
+# Next.js
+web/.next/
+web/out/
+web/.vercel/
+web/next-env.d.ts
+
+# Environment
+.env
+.env.*
+!.env.example
+!web/.env.example
+!comparison-service/.env.example
+
+# Test output
+coverage/
+web/coverage/
+web/test-results/
+web/playwright-report/
+web/.playwright/
+
+# Go build output
+comparison-service/bin/
+comparison-service/server
+comparison-service/server.exe
+comparison-service/*.test
+
+# TypeScript
+*.tsbuildinfo
+
+# Local tools and downloaded binaries
+tools/
+docs/day1/bin/
+
+# Local comparison test output
+test-diff-response.json
+test-diff-response*.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+npm-debug.log*

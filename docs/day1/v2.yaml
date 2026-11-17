@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Pets API
+  version: 2.0.0
+paths:
+  /pets:
+    get:
+      summary: List pets
+      description: Returns all pets, optionally sorted.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            maximum: 50
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [name, id]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pets'
+  /pets/{petId}:
+    get:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required: [name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [available, sold, pending]
+        tag:
+          type: string
+    Pets:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pet'

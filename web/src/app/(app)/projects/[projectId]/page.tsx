@@ -1,0 +1,219 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { CompareDialog } from "@/components/comparisons/compare-dialog";
+import { DeleteProjectButton } from "@/components/projects/delete-project-button";
+import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
+import { UploadVersionDialog } from "@/components/versions/upload-version-dialog";
+import { getCurrentUser } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+import { formatBytes, formatDate } from "@/lib/format";
+import { findProjectForUser } from "@/lib/queries";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = { params: Promise<{ projectId: string }> };
+
+export default async function ProjectPage({ params }: PageProps) {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { projectId } = await params;
+  const project = await findProjectForUser(user.id, projectId);
+  if (!project) {
+    notFound();
+  }
+
+  const [versions, comparisons] = await Promise.all([
+    getDb().apiVersion.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "asc" },
+    }),
+    getDb().comparison.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      include: {
+        baseVersion: { select: { id: true, label: true } },
+        targetVersion: { select: { id: true, label: true } },
+      },
+    }),
+  ]);
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <Link
+          href="/dashboard"
+          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+        >
+          ← Dashboard
+        </Link>
+        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+              {project.name}
+            </h1>
+            {project.description ? (
+              <p className="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+                {project.description}
+              </p>
+            ) : null}
+            <p className="mt-2 text-xs text-zinc-500">
+              Created {formatDate(project.createdAt)} · Updated {formatDate(project.updatedAt)}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <EditProjectDialog
+              project={{
+                id: project.id,
+                name: project.name,
+                description: project.description,
+              }}
+            />
+            <UploadVersionDialog projectId={project.id} />
+            <CompareDialog
+              projectId={project.id}
+              versions={versions.map((version) => ({
+                id: version.id,
+                label: version.label,
+                specFormat: version.specFormat,
+              }))}
+            />
+            <DeleteProjectButton projectId={project.id} projectName={project.name} />
+          </div>
+        </div>
+      </div>
+
+      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+          <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Versions</h2>
+          <span className="text-xs text-zinc-500">{versions.length}</span>
+        </div>
+
+        {versions.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              No versions yet
+            </p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Upload a YAML or JSON OpenAPI spec to start.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Label</th>
+                  <th className="px-5 py-3 font-medium">Title</th>
+                  <th className="px-5 py-3 font-medium">OpenAPI</th>
+                  <th className="px-5 py-3 font-medium">Format</th>
+                  <th className="px-5 py-3 font-medium">Size</th>
+                  <th className="px-5 py-3 font-medium">Uploaded</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                {versions.map((version) => (
+                  <tr key={version.id}>
+                    <td className="px-5 py-3">
+                      <Link
+                        href={`/versions/${version.id}`}
+                        className="font-medium text-zinc-900 hover:underline dark:text-zinc-100"
+                      >
+                        {version.label}
+                      </Link>
+                    </td>
+                    <td className="max-w-xs truncate px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {version.title}
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {version.openapiVersion}
+                    </td>
+                    <td className="px-5 py-3 uppercase text-zinc-600 dark:text-zinc-400">
+                      {version.specFormat}
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {formatBytes(version.fileSize)}
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {formatDate(version.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+          <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+            Comparisons
+          </h2>
+        </div>
+
+        {comparisons.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              No comparisons yet
+            </p>
+            <p className="mt-1 text-sm text-zinc-500">
+              Upload at least two versions, then compare them.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
+                <tr>
+                  <th className="px-5 py-3 font-medium">Versions</th>
+                  <th className="px-5 py-3 font-medium">Changes</th>
+                  <th className="px-5 py-3 font-medium">Breaking</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
+                {comparisons.map((comparison) => (
+                  <tr key={comparison.id}>
+                    <td className="px-5 py-3">
+                      <Link
+                        href={`/comparisons/${comparison.id}`}
+                        className="text-zinc-900 hover:underline dark:text-zinc-100"
+                      >
+                        {comparison.baseVersion.label} → {comparison.targetVersion.label}
+                      </Link>
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {comparison.totalChangelog}
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {comparison.totalBreaking}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span
+                        className={
+                          comparison.status === "completed"
+                            ? "rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
+                        }
+                      >
+                        {comparison.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
+                      {formatDate(comparison.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
