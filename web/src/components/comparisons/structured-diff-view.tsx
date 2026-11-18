@@ -121,16 +121,11 @@ function SourceLineRow({ line }: { line: SourceLine }) {
       variant={line.kind === "context" ? "default" : line.kind}
       className={sourceTone(line.kind)}
     >
-      <span className="grid min-w-max grid-cols-[3rem_3rem_1fr] items-baseline">
+      <span className="grid min-w-max grid-cols-[3rem_1fr] items-baseline gap-2">
         <span
-          className={`select-none pr-3 text-right font-mono text-sm tabular-nums ${gutter}`}
+          className={`select-none pr-1 text-right font-mono text-sm tabular-nums ${gutter}`}
         >
-          {line.oldLine ?? ""}
-        </span>
-        <span
-          className={`select-none pr-3 text-right font-mono text-sm tabular-nums ${gutter}`}
-        >
-          {line.newLine ?? ""}
+          {line.oldLine ?? line.newLine ?? ""}
         </span>
         <span className="whitespace-pre">{line.text || " "}</span>
       </span>
