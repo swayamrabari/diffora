@@ -2,6 +2,22 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+  BoxesIcon,
+  CircleIcon,
+  InfoIcon,
+  LayersIcon,
+  ListIcon,
+  type LucideIcon,
+  RouteIcon,
+  ServerIcon,
+  ShieldIcon,
+  SlidersHorizontalIcon,
+  WebhookIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +49,21 @@ import type { SourceHunk, SourceLine } from "@/types/comparison";
 
 type StructuredDiffViewProps = {
   changes: DiffChangeItem[];
+};
+
+const categoryIcons: Record<string, LucideIcon> = {
+  endpoint: RouteIcon,
+  operation: WorkflowIcon,
+  parameter: SlidersHorizontalIcon,
+  request: ArrowUpRightIcon,
+  response: ArrowDownLeftIcon,
+  header: ListIcon,
+  schema: BoxesIcon,
+  security: ShieldIcon,
+  server: ServerIcon,
+  metadata: InfoIcon,
+  webhook: WebhookIcon,
+  other: CircleIcon,
 };
 
 function categoryRank(category: string): number {
@@ -204,10 +235,12 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
 
 function TypeButton({
   label,
+  icon: Icon,
   active,
   onClick,
 }: {
   label: string;
+  icon: LucideIcon;
   active: boolean;
   onClick: () => void;
 }) {
@@ -215,12 +248,13 @@ function TypeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-2 text-left text-sm transition-colors lg:w-full ${
+      className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm font-medium transition-colors lg:w-full ${
         active
-          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+          ? "bg-sidebar-accent text-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
       }`}
     >
+      <Icon className="size-4 shrink-0" />
       <span className="min-w-0 truncate">{label}</span>
     </button>
   );
@@ -313,6 +347,7 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
         <div className="flex gap-1 overflow-x-auto p-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:p-3">
           <TypeButton
             label="All changes"
+            icon={LayersIcon}
             active={!category}
             onClick={() => update({ sc_category: null })}
           />
@@ -320,6 +355,7 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
             <TypeButton
               key={item}
               label={categoryLabels[item] ?? humanize(item)}
+              icon={categoryIcons[item] ?? CircleIcon}
               active={category === item}
               onClick={() => update({ sc_category: item })}
             />
