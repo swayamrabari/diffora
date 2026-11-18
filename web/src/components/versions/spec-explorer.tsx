@@ -1,28 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  Boxes,
-  ChevronDown,
-  Info,
-  Route,
-  Search,
-  Shield,
-} from "lucide-react";
+import { Boxes, ChevronDown, Route, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -31,13 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type {
-  SpecOperation,
-  SpecSchema,
-  SpecSecurityScheme,
-  SpecSummary,
-} from "@/lib/openapi-summary";
+import type { SpecOperation, SpecSchema, SpecSummary } from "@/lib/openapi-summary";
 
 const methodClasses: Record<string, string> = {
   GET: "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
@@ -61,21 +40,6 @@ function statusClasses(status: string): string {
     return "border-destructive/20 bg-destructive/10 text-destructive";
   }
   return "border-border bg-muted/40 text-muted-foreground";
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <Card size="sm">
-      <CardContent>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-sm font-medium">{children}</h3>;
 }
 
 function ContentBadges({
@@ -105,7 +69,7 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
   return (
     <Collapsible>
       <Card size="sm" className="overflow-hidden">
-        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/40">
+        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-muted/40">
           <Badge
             variant="outline"
             className={methodClasses[operation.method] ?? "border-border bg-muted/40"}
@@ -123,7 +87,7 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="space-y-5 border-t border-border px-4 py-4">
+          <div className="space-y-3 border-t border-border px-3 py-3">
             {operation.description ? (
               <p className="text-sm text-muted-foreground">{operation.description}</p>
             ) : null}
@@ -149,7 +113,7 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
 
             {operation.parameters.length > 0 ? (
               <div className="space-y-2">
-                <SectionTitle>Parameters</SectionTitle>
+                <h3 className="text-sm font-medium">Parameters</h3>
                 <div className="overflow-hidden rounded-lg border border-border">
                   <Table>
                     <TableHeader>
@@ -191,7 +155,7 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
             {operation.requestBody ? (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <SectionTitle>Request body</SectionTitle>
+                  <h3 className="text-sm font-medium">Request body</h3>
                   <Badge variant={operation.requestBody.required ? "secondary" : "outline"}>
                     {operation.requestBody.required ? "required" : "optional"}
                   </Badge>
@@ -201,7 +165,7 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
             ) : null}
 
             <div className="space-y-2">
-              <SectionTitle>Responses</SectionTitle>
+              <h3 className="text-sm font-medium">Responses</h3>
               <div className="overflow-hidden rounded-lg border border-border">
                 <Table>
                   <TableHeader>
@@ -242,7 +206,7 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
   return (
     <Collapsible>
       <Card size="sm" className="overflow-hidden">
-        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/40">
+        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-muted/40">
           <Boxes className="size-4 shrink-0 text-muted-foreground" />
           <span className="font-mono text-sm font-medium">{schema.name}</span>
           <Badge variant="secondary" className="font-normal">
@@ -255,7 +219,7 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="space-y-4 border-t border-border px-4 py-4">
+          <div className="space-y-3 border-t border-border px-3 py-3">
             {schema.description ? (
               <p className="text-sm text-muted-foreground">{schema.description}</p>
             ) : null}
@@ -302,251 +266,73 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
   );
 }
 
-function SecurityCard({ scheme }: { scheme: SpecSecurityScheme }) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-2">
-          <span className="font-mono">{scheme.name}</span>
-          <Badge variant="secondary">{scheme.type}</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-        {scheme.scheme ? <Badge variant="outline">{scheme.scheme}</Badge> : null}
-        {scheme.location ? <Badge variant="outline">in {scheme.location}</Badge> : null}
-        {scheme.parameterName ? (
-          <Badge variant="outline">{scheme.parameterName}</Badge>
-        ) : null}
-        {scheme.bearerFormat ? (
-          <Badge variant="outline">{scheme.bearerFormat}</Badge>
-        ) : null}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function SpecExplorer({ summary }: { summary: SpecSummary }) {
-  const [routeQuery, setRouteQuery] = useState("");
-  const [schemaQuery, setSchemaQuery] = useState("");
-
-  const filteredOperations = useMemo(() => {
-    const needle = routeQuery.trim().toLowerCase();
-    if (!needle) {
-      return summary.operations;
-    }
-    return summary.operations.filter((operation) =>
-      [
-        operation.method,
-        operation.path,
-        operation.summary,
-        operation.operationId,
-        operation.tags.join(" "),
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle)),
-    );
-  }, [routeQuery, summary.operations]);
-
-  const groupedOperations = useMemo(() => {
-    const groups = new Map<string, SpecOperation[]>();
-    for (const operation of filteredOperations) {
-      const tag = operation.tags[0] ?? "Untagged";
-      const items = groups.get(tag) ?? [];
-      items.push(operation);
-      groups.set(tag, items);
-    }
-    return Array.from(groups.entries()).sort(([left], [right]) =>
-      left.localeCompare(right),
-    );
-  }, [filteredOperations]);
-
-  const filteredSchemas = useMemo(() => {
-    const needle = schemaQuery.trim().toLowerCase();
-    if (!needle) {
-      return summary.schemas;
-    }
-    return summary.schemas.filter((schema) =>
-      [schema.name, schema.type, schema.description]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(needle)),
-    );
-  }, [schemaQuery, summary.schemas]);
+  const groups = new Map<string, SpecOperation[]>();
+  for (const operation of summary.operations) {
+    const tag = operation.tags[0] ?? "Untagged";
+    const items = groups.get(tag) ?? [];
+    items.push(operation);
+    groups.set(tag, items);
+  }
+  const groupedOperations = Array.from(groups.entries()).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
 
   return (
-    <Tabs defaultValue="overview" className="gap-6">
-      <TabsList className="w-full justify-start overflow-x-auto">
-        <TabsTrigger value="overview" className="flex-none">
-          <Info />
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="routes" className="flex-none">
-          <Route />
-          Routes
-        </TabsTrigger>
-        <TabsTrigger value="schemas" className="flex-none">
-          <Boxes />
-          Schemas
-        </TabsTrigger>
-        <TabsTrigger value="security" className="flex-none">
-          <Shield />
-          Security
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="overview" className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Operations" value={summary.counts.operations} />
-          <Stat label="Schemas" value={summary.counts.schemas} />
-          <Stat label="Security schemes" value={summary.counts.securitySchemes} />
-          <Stat label="Paths" value={summary.counts.paths} />
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Servers</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {summary.servers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No servers declared.</p>
-              ) : (
-                summary.servers.map((server) => (
-                  <div key={server.url} className="rounded-lg border border-border p-3">
-                    <p className="break-all font-mono text-xs">{server.url}</p>
-                    {server.description ? (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {server.description}
-                      </p>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {summary.tags.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tags declared.</p>
-              ) : (
-                summary.tags.map((tag) => (
-                  <Badge key={tag.name} variant="outline" title={tag.description ?? undefined}>
-                    {tag.name}
-                  </Badge>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Component parameters" value={summary.counts.parameters} />
-          <Stat label="Component request bodies" value={summary.counts.requestBodies} />
-          <Stat label="Component responses" value={summary.counts.responses} />
-        </div>
-      </TabsContent>
-
-      <TabsContent value="routes" className="space-y-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={routeQuery}
-            onChange={(event) => setRouteQuery(event.target.value)}
-            placeholder="Search routes by path, method, tag, or summary…"
-            className="pl-9"
-          />
+    <div className="space-y-8">
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Route className="size-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold tracking-tight">Endpoints</h2>
+          <Badge variant="outline">{summary.operations.length}</Badge>
         </div>
 
         {groupedOperations.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No routes match your search.
+              No endpoints declared.
             </CardContent>
           </Card>
         ) : (
-          groupedOperations.map(([tag, operations]) => (
-            <section key={tag} className="space-y-2">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium">{tag}</h3>
-                <Badge variant="outline">{operations.length}</Badge>
+          <div className="space-y-4">
+            {groupedOperations.map(([tag, operations]) => (
+              <div key={tag} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">{tag}</h3>
+                  <Badge variant="outline">{operations.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {operations.map((operation) => (
+                    <OperationCard key={operation.id} operation={operation} />
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                {operations.map((operation) => (
-                  <OperationCard key={operation.id} operation={operation} />
-                ))}
-              </div>
-            </section>
-          ))
+            ))}
+          </div>
         )}
-      </TabsContent>
+      </section>
 
-      <TabsContent value="schemas" className="space-y-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={schemaQuery}
-            onChange={(event) => setSchemaQuery(event.target.value)}
-            placeholder="Search schemas…"
-            className="pl-9"
-          />
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Boxes className="size-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold tracking-tight">Schemas</h2>
+          <Badge variant="outline">{summary.schemas.length}</Badge>
         </div>
 
-        {filteredSchemas.length === 0 ? (
+        {summary.schemas.length === 0 ? (
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              {summary.schemas.length === 0
-                ? "No component schemas declared."
-                : "No schemas match your search."}
+              No component schemas declared.
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-2">
-            {filteredSchemas.map((schema) => (
+            {summary.schemas.map((schema) => (
               <SchemaCard key={schema.name} schema={schema} />
             ))}
           </div>
         )}
-      </TabsContent>
-
-      <TabsContent value="security" className="space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Global security</CardTitle>
-            <CardDescription>
-              Applied unless an operation overrides its own requirements.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {summary.globalSecurity.length === 0 ? (
-              <span className="text-sm text-muted-foreground">No global security.</span>
-            ) : (
-              summary.globalSecurity.map((name) => (
-                <Badge key={name} variant="outline">
-                  <Shield className="size-3" />
-                  {name}
-                </Badge>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {summary.securitySchemes.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              No security schemes declared.
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {summary.securitySchemes.map((scheme) => (
-              <SecurityCard key={scheme.name} scheme={scheme} />
-            ))}
-          </div>
-        )}
-      </TabsContent>
-    </Tabs>
+      </section>
+    </div>
   );
 }

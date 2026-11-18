@@ -192,10 +192,9 @@ go test ./...
 
 Each uploaded version has a read-only API guide built from the stored spec:
 
-- Overview: servers, tags, and component counts.
-- Routes: operations grouped by tag, with parameters, request bodies, responses, content types, and security.
-- Schemas: component schemas with property types, required flags, descriptions, and enum values.
-- Security: global requirements and security schemes.
+- A compact metadata strip: original file, format, OpenAPI version, and upload date.
+- Collapsible endpoints grouped by tag, with parameters, request bodies, responses, content types, and security.
+- Collapsible schemas with property types, required flags, descriptions, and enum values.
 
 Raw text remains available through **Open raw** and **Copy spec**.
 

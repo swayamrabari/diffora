@@ -168,7 +168,7 @@ Short ADR-style log. Each entry records a decision that affects the build.
 
 - Context: The version page showed the raw spec in a `<pre>` block. Users could not quickly see routes, schemas, response types, or security without reading YAML.
 - Decision: Parse the stored spec server-side into a compact summary and render a read-only shadcn explorer with Overview, Routes, Schemas, and Security tabs. Keep raw/copy actions as secondary. Do not embed Swagger UI or Scalar.
-- Consequences: The version page is a documentation overview with searchable routes/schemas, method and status badges, parameter/response tables, and security schemes. Parsing is local and no raw spec is sent to the client. Unsupported or unparsable specs fall back to a message plus the raw link.
+- Consequences: The version page is a documentation overview with method and status badges, parameter/response tables, and security schemes. Parsing is local and no raw spec is sent to the client. Unsupported or unparsable specs fall back to a message plus the raw link. A later simplification removed the tabs and overview/security panels: the page now shows compact metadata, collapsible endpoints, then collapsible schemas.
 
 ## 2026-11-18 — Sidebar theme and shadcn select filters
 

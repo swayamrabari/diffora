@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
-import { formatBytes, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { summarizeSpec } from "@/lib/openapi-summary";
 import { findVersionForUser } from "@/lib/queries";
 
@@ -34,15 +34,6 @@ export default async function VersionPage({ params }: PageProps) {
 
   const summary = summarizeSpec(version.content);
 
-  const metadata = [
-    { label: "OpenAPI", value: version.openapiVersion },
-    { label: "Format", value: version.specFormat.toUpperCase() },
-    { label: "Size", value: formatBytes(version.fileSize) },
-    { label: "Original file", value: version.originalFilename },
-    { label: "Uploaded", value: formatDate(version.createdAt) },
-    { label: "Checksum", value: `${version.checksum.slice(0, 16)}…` },
-  ];
-
   return (
     <>
       <HeaderBreadcrumb>
@@ -60,12 +51,7 @@ export default async function VersionPage({ params }: PageProps) {
       <div className="space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{version.label}</h1>
-              <Badge variant="outline" className="uppercase">
-                {version.specFormat}
-              </Badge>
-            </div>
+            <h1 className="text-2xl font-semibold tracking-tight">{version.label}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{version.title}</p>
             {version.description ? (
               <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -87,32 +73,32 @@ export default async function VersionPage({ params }: PageProps) {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              {metadata.map((item) => (
-                <div key={item.label}>
-                  <dt className="text-muted-foreground">{item.label}</dt>
-                  <dd className="mt-1 break-all font-medium">{item.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+          <div className="inline-flex min-w-0 items-center gap-1.5">
+            <span className="text-muted-foreground">File</span>
+            <span className="truncate font-medium" title={version.originalFilename}>
+              {version.originalFilename}
+            </span>
+          </div>
+          <span className="hidden h-4 w-px bg-border sm:block" />
+          <div className="inline-flex items-center gap-1.5">
+            <span className="text-muted-foreground">Format</span>
+            <Badge variant="outline" className="uppercase">
+              {version.specFormat}
+            </Badge>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            <span className="text-muted-foreground">OpenAPI</span>
+            <Badge variant="outline">{version.openapiVersion}</Badge>
+          </div>
+          <div className="inline-flex items-center gap-1.5">
+            <span className="text-muted-foreground">Uploaded</span>
+            <span className="font-medium">{formatDate(version.createdAt)}</span>
+          </div>
+        </div>
 
         {summary ? (
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold tracking-tight">API guide</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Browse routes, schemas, responses, and security requirements.
-              </p>
-            </div>
-            <SpecExplorer summary={summary} />
-          </section>
+          <SpecExplorer summary={summary} />
         ) : (
           <Card>
             <CardHeader>
