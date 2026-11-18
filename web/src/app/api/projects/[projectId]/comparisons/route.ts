@@ -247,8 +247,11 @@ export async function POST(request: Request, context: RouteContext) {
     );
 
     return ok({ comparison: comparisonSummary(created, base, target) }, 201);
-  } catch {
-    console.error("comparison create: database error");
+  } catch (error) {
+    console.error(
+      "comparison create: database error",
+      error instanceof Error ? error.message : "unknown error",
+    );
     return errorResponse(500, "INTERNAL", "Could not save the comparison.");
   }
 }
