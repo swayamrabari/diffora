@@ -31,7 +31,7 @@ export function TopBar({ user }: TopBarProps) {
         <Brand />
         <div
           id="app-header-breadcrumb"
-          className="flex min-w-0 flex-1 items-center gap-2 font-mono text-sm font-medium text-muted-foreground"
+          className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium text-muted-foreground"
         />
         <div className="flex shrink-0 items-center gap-3">
           <div className="hidden text-right sm:block">
