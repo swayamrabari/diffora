@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui/app-dialog";
+import { Dialog } from "@/components/ui/app-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type EditProjectDialogProps = {
   project: {
@@ -66,9 +70,9 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
   return (
     <>
-      <button type="button" className={secondaryButtonClass} onClick={openDialog}>
+      <Button type="button" variant="outline" onClick={openDialog}>
         Edit
-      </button>
+      </Button>
       <Dialog open={open} onClose={close} title="Edit project">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
@@ -77,13 +81,10 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
             </p>
           ) : null}
 
-          <div>
-            <label htmlFor="edit-project-name" className="text-sm font-medium text-foreground">
-              Name
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="edit-project-name">Name</Label>
+            <Input
               id="edit-project-name"
-              className={fieldClass}
               value={name}
               onChange={(event) => setName(event.target.value)}
               required
@@ -91,13 +92,10 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
             />
           </div>
 
-          <div>
-            <label htmlFor="edit-project-description" className="text-sm font-medium text-foreground">
-              Description
-            </label>
-            <textarea
+          <div className="space-y-2">
+            <Label htmlFor="edit-project-description">Description</Label>
+            <Textarea
               id="edit-project-description"
-              className={fieldClass}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               maxLength={500}
@@ -106,12 +104,12 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={close} disabled={loading} className={secondaryButtonClass}>
+            <Button type="button" variant="outline" onClick={close} disabled={loading}>
               Cancel
-            </button>
-            <button type="submit" disabled={loading} className={primaryButtonClass}>
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? "Saving…" : "Save changes"}
-            </button>
+            </Button>
           </div>
         </form>
       </Dialog>

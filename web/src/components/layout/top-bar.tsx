@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Brand } from "@/components/layout/brand";
+import { Button } from "@/components/ui/button";
 
 type TopBarProps = {
   user: {
@@ -38,14 +39,9 @@ export function TopBar({ user }: TopBarProps) {
             <p className="text-xs font-medium leading-4 text-foreground">{user.name}</p>
             <p className="text-[11px] leading-4 text-muted-foreground">{user.email}</p>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            disabled={loading}
-            className="h-8 rounded-md border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={logout} disabled={loading}>
             {loading ? "Signing out…" : "Log out"}
-          </button>
+          </Button>
         </div>
       </div>
     </header>

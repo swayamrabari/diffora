@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog, fieldClass, primaryButtonClass } from "@/components/ui/app-dialog";
+import { Dialog } from "@/components/ui/app-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export function NewProjectDialog() {
   const router = useRouter();
@@ -54,9 +58,9 @@ export function NewProjectDialog() {
 
   return (
     <>
-      <button type="button" className={primaryButtonClass} onClick={() => setOpen(true)}>
+      <Button type="button" onClick={() => setOpen(true)}>
         New project
-      </button>
+      </Button>
       <Dialog open={open} onClose={close} title="New project">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
@@ -65,13 +69,10 @@ export function NewProjectDialog() {
             </p>
           ) : null}
 
-          <div>
-            <label htmlFor="project-name" className="text-sm font-medium text-foreground">
-              Name
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="project-name">Name</Label>
+            <Input
               id="project-name"
-              className={fieldClass}
               value={name}
               onChange={(event) => setName(event.target.value)}
               required
@@ -80,13 +81,12 @@ export function NewProjectDialog() {
             />
           </div>
 
-          <div>
-            <label htmlFor="project-description" className="text-sm font-medium text-foreground">
+          <div className="space-y-2">
+            <Label htmlFor="project-description">
               Description <span className="font-normal text-muted-foreground">(optional)</span>
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id="project-description"
-              className={fieldClass}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               maxLength={500}
@@ -95,17 +95,12 @@ export function NewProjectDialog() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={close}
-              disabled={loading}
-              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-60"
-            >
+            <Button type="button" variant="outline" onClick={close} disabled={loading}>
               Cancel
-            </button>
-            <button type="submit" disabled={loading} className={primaryButtonClass}>
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? "Creating…" : "Create project"}
-            </button>
+            </Button>
           </div>
         </form>
       </Dialog>

@@ -2,7 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui/app-dialog";
+import { Dialog } from "@/components/ui/app-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type UploadVersionDialogProps = {
   projectId: string;
@@ -81,9 +85,9 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
 
   return (
     <>
-      <button type="button" className={secondaryButtonClass} onClick={openDialog}>
+      <Button type="button" variant="outline" onClick={openDialog}>
         Upload version
-      </button>
+      </Button>
       <Dialog open={open} onClose={close} title="Upload version">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
@@ -92,28 +96,23 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
             </p>
           ) : null}
 
-          <div>
-            <label htmlFor="version-file" className="text-sm font-medium text-foreground">
-              Spec file
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="version-file">Spec file</Label>
+            <Input
               id="version-file"
               type="file"
               accept=".yaml,.yml,.json"
               onChange={onFileChange}
               required
-              className="mt-2 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80"
+              className="file:mr-3 file:border-0 file:bg-transparent file:text-sm file:font-medium"
             />
-            <p className="mt-1 text-xs text-muted-foreground">YAML or JSON, up to 2 MB.</p>
+            <p className="text-xs text-muted-foreground">YAML or JSON, up to 2 MB.</p>
           </div>
 
-          <div>
-            <label htmlFor="version-label" className="text-sm font-medium text-foreground">
-              Label
-            </label>
-            <input
+          <div className="space-y-2">
+            <Label htmlFor="version-label">Label</Label>
+            <Input
               id="version-label"
-              className={fieldClass}
               value={label}
               onChange={(event) => setLabel(event.target.value)}
               required
@@ -122,13 +121,12 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
             />
           </div>
 
-          <div>
-            <label htmlFor="version-description" className="text-sm font-medium text-foreground">
+          <div className="space-y-2">
+            <Label htmlFor="version-description">
               Description <span className="font-normal text-muted-foreground">(optional)</span>
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id="version-description"
-              className={fieldClass}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               maxLength={500}
@@ -137,12 +135,12 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={close} disabled={loading} className={secondaryButtonClass}>
+            <Button type="button" variant="outline" onClick={close} disabled={loading}>
               Cancel
-            </button>
-            <button type="submit" disabled={loading} className={primaryButtonClass}>
+            </Button>
+            <Button type="submit" disabled={loading}>
               {loading ? "Uploading…" : "Upload"}
-            </button>
+            </Button>
           </div>
         </form>
       </Dialog>

@@ -2,11 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  Dialog,
-  primaryButtonClass,
-  secondaryButtonClass,
-} from "@/components/ui/app-dialog";
+import { Dialog } from "@/components/ui/app-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -107,15 +104,15 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
 
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={openDialog}
         disabled={versions.length < 2}
         title={versions.length < 2 ? "Upload at least two versions first." : undefined}
-        className={secondaryButtonClass}
       >
         Compare
-      </button>
+      </Button>
 
       <Dialog open={open} onClose={close} title="Compare versions">
         <form className="space-y-4" onSubmit={onSubmit}>
@@ -194,12 +191,12 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
           ) : null}
 
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={close} disabled={loading} className={secondaryButtonClass}>
+            <Button type="button" variant="outline" onClick={close} disabled={loading}>
               Cancel
-            </button>
-            <button type="submit" disabled={disabled} className={primaryButtonClass}>
+            </Button>
+            <Button type="submit" disabled={disabled}>
               {loading ? "Comparing…" : "Run comparison"}
-            </button>
+            </Button>
           </div>
         </form>
       </Dialog>

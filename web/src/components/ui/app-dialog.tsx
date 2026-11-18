@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type DialogProps = {
   open: boolean;
@@ -43,14 +45,15 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
       >
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Close"
           >
-            ×
-          </button>
+            <XIcon />
+          </Button>
         </div>
         <div className="p-6">{children}</div>
       </div>
@@ -58,11 +61,4 @@ export function Dialog({ open, onClose, title, children }: DialogProps) {
   );
 }
 
-export const fieldClass =
-  "mt-2 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30";
 
-export const primaryButtonClass =
-  "inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-60";
-
-export const secondaryButtonClass =
-  "inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-60";

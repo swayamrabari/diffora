@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
   Card,
@@ -75,7 +76,7 @@ export default async function VersionPage({ params }: PageProps) {
               href={`/api/versions/${version.id}/raw`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-sm font-medium shadow-xs transition-colors hover:bg-muted"
+              className={buttonVariants({ variant: "outline" })}
             >
               Open raw
             </a>

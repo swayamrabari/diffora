@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 type DeleteProjectButtonProps = {
   projectId: string;
@@ -40,13 +41,8 @@ export function DeleteProjectButton({ projectId, projectName }: DeleteProjectBut
   }
 
   return (
-    <button
-      type="button"
-      onClick={onDelete}
-      disabled={loading}
-      className="inline-flex h-9 items-center justify-center rounded-md border border-destructive/20 bg-destructive/10 px-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-60"
-    >
+    <Button type="button" variant="destructive" onClick={onDelete} disabled={loading}>
       {loading ? "Deleting…" : "Delete"}
-    </button>
+    </Button>
   );
 }

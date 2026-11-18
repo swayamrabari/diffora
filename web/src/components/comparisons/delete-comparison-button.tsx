@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type DeleteComparisonButtonProps = {
   comparisonId: string;
@@ -40,14 +41,9 @@ export function DeleteComparisonButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onDelete}
-      disabled={loading}
-      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-60"
-    >
-      <Trash2Icon className="size-3.5" />
+    <Button type="button" variant="destructive" size="sm" onClick={onDelete} disabled={loading}>
+      <Trash2Icon />
       {loading ? "Deleting…" : "Delete"}
-    </button>
+    </Button>
   );
 }
