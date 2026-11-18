@@ -15,7 +15,7 @@ export function Brand({ href = "/dashboard", className }: BrandProps) {
         className,
       )}
     >
-      <span className="grid size-5 place-items-center rounded-[6px] bg-zinc-950 text-[10px] font-bold leading-none text-white dark:bg-zinc-50 dark:text-zinc-950">
+      <span className="grid size-5 place-items-center rounded-[6px] bg-primary text-[10px] font-bold leading-none text-primary-foreground shadow-sm">
         D
       </span>
       <span className="text-sm font-semibold tracking-tight">Diffora</span>

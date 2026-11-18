@@ -44,7 +44,7 @@ export function DeleteComparisonButton({
       type="button"
       onClick={onDelete}
       disabled={loading}
-      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-red-200 px-2.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950"
+      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-60"
     >
       <Trash2Icon className="size-3.5" />
       {loading ? "Deleting…" : "Delete"}

@@ -12,7 +12,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <Suspense fallback={<div className="text-sm text-zinc-500">Loading…</div>}>
+    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );

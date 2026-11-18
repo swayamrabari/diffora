@@ -60,13 +60,13 @@ export function NewProjectDialog() {
       <Dialog open={open} onClose={close} title="New project">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
-            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
           ) : null}
 
           <div>
-            <label htmlFor="project-name" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <label htmlFor="project-name" className="text-sm font-medium text-foreground">
               Name
             </label>
             <input
@@ -81,8 +81,8 @@ export function NewProjectDialog() {
           </div>
 
           <div>
-            <label htmlFor="project-description" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              Description <span className="font-normal text-zinc-500">(optional)</span>
+            <label htmlFor="project-description" className="text-sm font-medium text-foreground">
+              Description <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <textarea
               id="project-description"
@@ -99,7 +99,7 @@ export function NewProjectDialog() {
               type="button"
               onClick={close}
               disabled={loading}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-muted disabled:opacity-60"
             >
               Cancel
             </button>

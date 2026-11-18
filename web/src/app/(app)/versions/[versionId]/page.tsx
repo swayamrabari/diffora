@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowUpRight, GitCompareArrows } from "lucide-react";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { formatBytes, formatDate } from "@/lib/format";
@@ -35,6 +45,15 @@ export default async function VersionPage({ params }: PageProps) {
     },
   });
 
+  const metadata = [
+    { label: "OpenAPI", value: version.openapiVersion },
+    { label: "Format", value: version.specFormat.toUpperCase() },
+    { label: "Size", value: formatBytes(version.fileSize) },
+    { label: "Original file", value: version.originalFilename },
+    { label: "Uploaded", value: formatDate(version.createdAt) },
+    { label: "Checksum", value: `${version.checksum.slice(0, 16)}…`, mono: true },
+  ];
+
   return (
     <>
       <HeaderBreadcrumb>
@@ -49,139 +68,160 @@ export default async function VersionPage({ params }: PageProps) {
         <span className="truncate">{version.label}</span>
       </HeaderBreadcrumb>
 
-      <div className="space-y-8">
-        <div>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              {version.label}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{version.title}</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <CopyButton value={version.content} label="Copy spec" />
-            <a
-              href={`/api/versions/${version.id}/raw`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
-            >
-              Open raw
-            </a>
-          </div>
-        </div>
-      </div>
+      <div className="space-y-10">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-xs sm:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-transparent to-transparent" />
+          <div className="relative flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="bg-background/60">
+                  API version
+                </Badge>
+                <Badge variant="secondary" className="uppercase">
+                  {version.specFormat}
+                </Badge>
+                <Badge variant="outline">{version.openapiVersion}</Badge>
+              </div>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+                {version.label}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">{version.title}</p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Uploaded {formatDate(version.createdAt)} · {formatBytes(version.fileSize)}
+              </p>
+            </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Metadata</h2>
-        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="text-zinc-500">OpenAPI</dt>
-            <dd className="mt-1 text-zinc-900 dark:text-zinc-100">{version.openapiVersion}</dd>
+            <div className="flex flex-wrap items-center gap-2">
+              <CopyButton value={version.content} label="Copy spec" />
+              <a
+                href={`/api/versions/${version.id}/raw`}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                Open raw
+              </a>
+            </div>
           </div>
-          <div>
-            <dt className="text-zinc-500">Format</dt>
-            <dd className="mt-1 uppercase text-zinc-900 dark:text-zinc-100">{version.specFormat}</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500">Size</dt>
-            <dd className="mt-1 text-zinc-900 dark:text-zinc-100">{formatBytes(version.fileSize)}</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500">Original file</dt>
-            <dd className="mt-1 break-all text-zinc-900 dark:text-zinc-100">
-              {version.originalFilename}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500">Uploaded</dt>
-            <dd className="mt-1 text-zinc-900 dark:text-zinc-100">{formatDate(version.createdAt)}</dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500">Checksum</dt>
-            <dd className="mt-1 font-mono text-xs text-zinc-900 dark:text-zinc-100">
-              {version.checksum.slice(0, 16)}…
-            </dd>
-          </div>
-        </dl>
-        {version.description ? (
-          <p className="mt-4 border-t border-zinc-200 pt-4 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-            {version.description}
-          </p>
-        ) : null}
-      </section>
+        </section>
 
-      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">Raw spec</h2>
-        </div>
-        <pre className="max-h-[70vh] overflow-auto p-5 text-xs leading-6 text-zinc-800 dark:text-zinc-200">
-          <code>{version.content}</code>
-        </pre>
-      </section>
-
-      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
-          <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-            Comparisons involving this version
-          </h2>
-        </div>
-
-        {comparisons.length === 0 ? (
-          <div className="px-5 py-12 text-center">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              No comparisons yet
-            </p>
-            <p className="mt-1 text-sm text-zinc-500">
-              Compare this version with another version in the project.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
-                <tr>
-                  <th className="px-5 py-3 font-medium">Versions</th>
-                  <th className="px-5 py-3 font-medium">Changes</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900">
-                {comparisons.map((comparison) => (
-                  <tr key={comparison.id}>
-                    <td className="px-5 py-3">
-                      <Link
-                        href={`/comparisons/${comparison.id}`}
-                        className="text-zinc-900 hover:underline dark:text-zinc-100"
-                      >
-                        {comparison.baseVersion.label} → {comparison.targetVersion.label}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
-                      {comparison.totalChanges}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span
-                        className={
-                          comparison.status === "completed"
-                            ? "rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
-                            : "rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 dark:bg-red-950 dark:text-red-300"
-                        }
-                      >
-                        {comparison.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
-                      {formatDate(comparison.createdAt)}
-                    </td>
-                  </tr>
+        <section className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Metadata</CardTitle>
+              <CardDescription>Identity and upload details for this spec.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {metadata.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-lg border border-border/70 bg-muted/20 p-3"
+                  >
+                    <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {item.label}
+                    </dt>
+                    <dd
+                      className={`mt-1 break-all text-sm font-medium ${
+                        item.mono ? "font-mono text-xs" : ""
+                      }`}
+                    >
+                      {item.value}
+                    </dd>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </dl>
+              {version.description ? (
+                <p className="rounded-lg border border-border/70 bg-muted/20 p-3 text-sm text-muted-foreground">
+                  {version.description}
+                </p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Raw spec</CardTitle>
+              <CardDescription>
+                The exact uploaded content. Copy it or open it in a new tab.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <pre className="max-h-[52vh] overflow-auto border-t border-border bg-muted/20 p-5 font-mono text-xs leading-6">
+                <code>{version.content}</code>
+              </pre>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold tracking-tight">
+                  Comparisons involving this version
+                </h2>
+                <Badge variant="outline">{comparisons.length}</Badge>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Open a saved diff to review the changes.
+              </p>
+            </div>
           </div>
-        )}
-      </section>
+
+          {comparisons.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
+                <div className="grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+                  <GitCompareArrows className="size-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">No comparisons yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Compare this version with another version in the project.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3">
+              {comparisons.map((comparison) => (
+                <Link
+                  key={comparison.id}
+                  href={`/comparisons/${comparison.id}`}
+                  className="group block"
+                >
+                  <Card
+                    size="sm"
+                    className="transition-all group-hover:-translate-y-0.5 group-hover:shadow-md group-hover:ring-foreground/20"
+                  >
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {comparison.baseVersion.label} → {comparison.targetVersion.label}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatDate(comparison.createdAt)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{comparison.totalChanges} changes</Badge>
+                        <Badge
+                          variant={
+                            comparison.status === "completed" ? "secondary" : "destructive"
+                          }
+                        >
+                          {comparison.status}
+                        </Badge>
+                        <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </>
   );

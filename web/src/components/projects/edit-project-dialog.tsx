@@ -72,13 +72,13 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       <Dialog open={open} onClose={close} title="Edit project">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
-            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
           ) : null}
 
           <div>
-            <label htmlFor="edit-project-name" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <label htmlFor="edit-project-name" className="text-sm font-medium text-foreground">
               Name
             </label>
             <input
@@ -92,7 +92,7 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
           </div>
 
           <div>
-            <label htmlFor="edit-project-description" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <label htmlFor="edit-project-description" className="text-sm font-medium text-foreground">
               Description
             </label>
             <textarea

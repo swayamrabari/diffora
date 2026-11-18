@@ -87,13 +87,13 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
       <Dialog open={open} onClose={close} title="Upload version">
         <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
-            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+            <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </p>
           ) : null}
 
           <div>
-            <label htmlFor="version-file" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <label htmlFor="version-file" className="text-sm font-medium text-foreground">
               Spec file
             </label>
             <input
@@ -102,13 +102,13 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
               accept=".yaml,.yml,.json"
               onChange={onFileChange}
               required
-              className="mt-1 block w-full text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-zinc-900 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-100"
+              className="mt-2 block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80"
             />
-            <p className="mt-1 text-xs text-zinc-500">YAML or JSON, up to 2 MB.</p>
+            <p className="mt-1 text-xs text-muted-foreground">YAML or JSON, up to 2 MB.</p>
           </div>
 
           <div>
-            <label htmlFor="version-label" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            <label htmlFor="version-label" className="text-sm font-medium text-foreground">
               Label
             </label>
             <input
@@ -123,8 +123,8 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
           </div>
 
           <div>
-            <label htmlFor="version-description" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-              Description <span className="font-normal text-zinc-500">(optional)</span>
+            <label htmlFor="version-description" className="text-sm font-medium text-foreground">
+              Description <span className="font-normal text-muted-foreground">(optional)</span>
             </label>
             <textarea
               id="version-description"

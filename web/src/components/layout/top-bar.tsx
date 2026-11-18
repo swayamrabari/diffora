@@ -26,7 +26,7 @@ export function TopBar({ user }: TopBarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
       <div className="flex h-12 w-full items-center gap-3 px-3 sm:px-4">
         <Brand />
         <div

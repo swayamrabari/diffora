@@ -3,9 +3,18 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-
-const inputClass =
-  "mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50";
+import { Brand } from "@/components/layout/brand";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const router = useRouter();
@@ -50,75 +59,67 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-zinc-500">Diffora</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-          Sign in
-        </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          Compare OpenAPI versions and review every change.
-        </p>
-      </div>
+    <div className="w-full max-w-sm">
+      <Brand className="mb-6 lg:hidden" />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardDescription>
+            Sign in to compare OpenAPI versions and review changes.
+          </CardDescription>
+        </CardHeader>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
-        {error ? (
-          <p
-            role="alert"
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+        <CardContent>
+          <form className="space-y-5" onSubmit={onSubmit}>
+            {error ? (
+              <p
+                role="alert"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+        </CardContent>
+
+        <CardFooter className="border-t text-sm text-muted-foreground">
+          No account?{" "}
+          <Link
+            href="/register"
+            className="font-medium text-foreground underline underline-offset-4"
           >
-            {error}
-          </p>
-        ) : null}
-
-        <div>
-          <label htmlFor="email" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
-        >
-          {loading ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-
-      <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
-        No account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-zinc-950 underline underline-offset-4 dark:text-zinc-50"
-        >
-          Create one
-        </Link>
-      </p>
+            Create one
+          </Link>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,13 +1,19 @@
+import { Skeleton } from "@/components/ui/skeleton";
+
 export default function AppLoading() {
   return (
-    <div className="animate-pulse space-y-4">
-      <div className="h-8 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="h-24 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-24 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-24 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-4 w-96 max-w-full" />
       </div>
-      <div className="h-64 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+        <Skeleton className="h-24 rounded-xl" />
+      </div>
+      <Skeleton className="h-64 rounded-2xl" />
     </div>
   );
 }
