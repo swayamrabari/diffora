@@ -64,11 +64,12 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 
 **Workspace:**
 
-- One page, no tabs. The comparison header is a slim app header with the Diffora logo, project name, and `file 1 → file 2`. It also holds compact export/delete actions.
+- One page, no tabs. The sticky app header has a fixed layout: Diffora brand, a conditional breadcrumb, and user/logout. On a comparison it shows `project / file 1 → file 2`; on a project it shows `project`; on the dashboard only brand and user remain.
+- Comparisons expose export/delete from their project card, not from the header.
 - A sidebar lists change types (Endpoints, Schemas, etc.) with counts. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
 - Filters: free text, change type, HTTP method, and a deprecated toggle.
-- Each card shows deterministic, user-friendly title and tags. Change type uses green/red/blue tinted badges; categories use a separate color palette. Internal pointers are never displayed.
-- Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card. Only changed lines are shown.
+- Each card shows deterministic, user-friendly title and tags. Change type uses green/red/blue tinted badges; category and subtype badges are neutral. Internal pointers are never displayed.
+- Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card. Only changed lines are shown; first/last rows carry the vertical padding instead of the container.
 - The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
 - The app shell uses full available width on every page, with responsive horizontal padding.
 - “Deprecated” is a tag and filter when `field` is `deprecated` and the new value is `true`.

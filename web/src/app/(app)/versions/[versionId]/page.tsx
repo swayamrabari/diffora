@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { CopyButton } from "@/components/ui/copy-button";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
@@ -35,16 +36,23 @@ export default async function VersionPage({ params }: PageProps) {
   });
 
   return (
-    <div className="space-y-8">
-      <div>
+    <>
+      <HeaderBreadcrumb>
+        <span className="text-muted-foreground">/</span>
         <Link
           href={`/projects/${version.projectId}`}
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="truncate text-sm text-muted-foreground hover:text-foreground"
         >
-          ← {version.project.name}
+          {version.project.name}
         </Link>
-        <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-          <div>
+        <span className="text-muted-foreground">/</span>
+        <span className="truncate text-sm font-medium">{version.label}</span>
+      </HeaderBreadcrumb>
+
+      <div className="space-y-8">
+        <div>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
               {version.label}
             </h1>
@@ -174,6 +182,7 @@ export default async function VersionPage({ params }: PageProps) {
           </div>
         )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }

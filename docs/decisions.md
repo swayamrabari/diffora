@@ -142,3 +142,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Remove the max-width cap from the app shell and top bar. Replace card side-stripes with green/red/blue change-type badges and a separate palette for category badges. Match the code block background to the card, and use the same font, size, and color for line numbers, the `+`/`-` marker, and code.
 - Consequences: All pages use the full viewport width with responsive padding. The comparison cards are cleaner, category colors are distinct from change-type colors, and diff rows read as a single visual unit. The card list has extra bottom scroll padding.
 
+## 2026-11-18 — Fixed header, neutral type tags, tighter code blocks
+
+- Context: The header still shifted between pages and carried dashboard/export/delete actions. Colored category badges competed with change-type colors, and code blocks had container padding that made the first/last rows look detached.
+- Decision: Make the app header sticky with a fixed brand / conditional breadcrumb / user layout. Remove the Dashboard link and header actions. Move export/delete into project comparison cards. Make category and subtype tags neutral; keep only change type colored. Remove top/bottom code-block padding and apply it to the first/last diff rows instead.
+- Consequences: The header stays visually stable across dashboard, project, version, and comparison pages. Comparison actions live with the comparison card. Type tags are quieter, and diff rows own their spacing so the code block background stays continuous with the card.
+

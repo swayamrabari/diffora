@@ -42,38 +42,11 @@ const changeTypeBadgeClasses: Record<string, string> = {
     "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
 };
 
-const categoryBadgeClasses: Record<string, string> = {
-  endpoint:
-    "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
-  operation:
-    "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-  parameter:
-    "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
-  request:
-    "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  response:
-    "border-orange-500/20 bg-orange-500/10 text-orange-700 dark:text-orange-300",
-  header:
-    "border-lime-600/20 bg-lime-500/10 text-lime-700 dark:text-lime-300",
-  schema:
-    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300",
-  security:
-    "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
-  server:
-    "border-teal-500/20 bg-teal-500/10 text-teal-700 dark:text-teal-300",
-  metadata:
-    "border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
-  webhook:
-    "border-pink-500/20 bg-pink-500/10 text-pink-700 dark:text-pink-300",
-  other: "border-border bg-muted/40 text-muted-foreground",
-};
-
 function changeTypeBadgeClass(changeType: string): string {
-  return changeTypeBadgeClasses[changeType] ?? "border-border bg-muted/40 text-muted-foreground";
-}
-
-function categoryBadgeClass(category: string): string {
-  return categoryBadgeClasses[category] ?? categoryBadgeClasses.other;
+  return (
+    changeTypeBadgeClasses[changeType] ??
+    "border-border bg-muted/40 text-muted-foreground"
+  );
 }
 
 function sourceTone(kind: SourceLine["kind"]): string {
@@ -96,7 +69,15 @@ function sourceGutterTone(kind: SourceLine["kind"]): string {
   return "text-muted-foreground";
 }
 
-function SourceLineRow({ line }: { line: SourceLine }) {
+function SourceLineRow({
+  line,
+  first,
+  last,
+}: {
+  line: SourceLine;
+  first: boolean;
+  last: boolean;
+}) {
   if (line.kind === "gap") {
     return (
       <CodeBlockLine className="bg-muted/40 text-center text-xs text-muted-foreground">
@@ -109,7 +90,7 @@ function SourceLineRow({ line }: { line: SourceLine }) {
   return (
     <CodeBlockLine
       variant={line.kind === "context" ? "default" : line.kind}
-      className={sourceTone(line.kind)}
+      className={`${sourceTone(line.kind)} ${first ? "pt-3" : ""} ${last ? "pb-3" : ""}`}
     >
       <span className="flex min-w-max items-baseline">
         <span
@@ -147,9 +128,14 @@ function SourceDiffBody({ hunks }: { hunks: SourceHunk[] }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent className="px-4 py-3 [&>code]:w-full">
+      <CodeBlockContent className="px-4 py-0 [&>code]:w-full">
         {rows.map((line, index) => (
-          <SourceLineRow key={`${line.kind}-${index}`} line={line} />
+          <SourceLineRow
+            key={`${line.kind}-${index}`}
+            line={line}
+            first={index === 0}
+            last={index === rows.length - 1}
+          />
         ))}
       </CodeBlockContent>
     </CodeBlock>
@@ -169,12 +155,14 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent lineNumbers className="px-4 py-3 [&>code]:w-full">
+      <CodeBlockContent lineNumbers className="px-4 py-0 [&>code]:w-full">
         {lines.map((line, index) => (
           <CodeBlockLine
             key={`${line.kind}-${index}`}
             variant={line.kind === "context" ? "default" : line.kind}
-            className={sourceTone(line.kind)}
+            className={`${sourceTone(line.kind)} ${
+              index === 0 ? "pt-3" : ""
+            } ${index === lines.length - 1 ? "pb-3" : ""}`}
           >
             {line.text}
           </CodeBlockLine>
@@ -197,7 +185,10 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
           >
             {changeTypeLabel(change.changeType)}
           </Badge>
-          <Badge variant="outline" className={categoryBadgeClass(change.category)}>
+          <Badge
+            variant="outline"
+            className="border-border bg-muted/40 text-muted-foreground"
+          >
             {categoryLabels[change.category] ?? humanize(change.category)}
           </Badge>
           {change.subcategory ? (

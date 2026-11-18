@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CompareDialog } from "@/components/comparisons/compare-dialog";
+import { DeleteComparisonButton } from "@/components/comparisons/delete-comparison-button";
+import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import { EditProjectDialog } from "@/components/projects/edit-project-dialog";
 import { UploadVersionDialog } from "@/components/versions/upload-version-dialog";
@@ -77,16 +79,16 @@ export default async function ProjectPage({ params }: PageProps) {
   ]);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <Link
-          href="/dashboard"
-          className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-        >
-          ← Dashboard
-        </Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-          <div>
+    <>
+      <HeaderBreadcrumb>
+        <span className="text-muted-foreground">/</span>
+        <span className="truncate text-sm font-medium">{project.name}</span>
+      </HeaderBreadcrumb>
+
+      <div className="space-y-8">
+        <div>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
               {project.name}
             </h1>
@@ -226,12 +228,6 @@ export default async function ProjectPage({ params }: PageProps) {
                         {formatDate(comparison.createdAt)} · {comparison.totalChanges} changes
                       </p>
                     </div>
-                    <Link
-                      href={`/comparisons/${comparison.id}`}
-                      className="inline-flex h-8 shrink-0 items-center rounded-md border border-zinc-300 px-2.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                    >
-                      View changes
-                    </Link>
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
@@ -250,12 +246,32 @@ export default async function ProjectPage({ params }: PageProps) {
                       </span>
                     ) : null}
                   </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <a
+                      href={`/api/comparisons/${comparison.id}/export`}
+                      className="inline-flex h-8 items-center rounded-md border border-zinc-300 px-2.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                    >
+                      Export
+                    </a>
+                    <DeleteComparisonButton
+                      comparisonId={comparison.id}
+                      projectId={project.id}
+                    />
+                    <Link
+                      href={`/comparisons/${comparison.id}`}
+                      className="inline-flex h-8 items-center rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      View changes
+                    </Link>
+                  </div>
                 </article>
               );
             })}
           </div>
         )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }

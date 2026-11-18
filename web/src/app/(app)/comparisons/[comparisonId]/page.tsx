@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { ComparisonWorkspace } from "@/components/comparisons/comparison-workspace";
+import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { getCurrentUser } from "@/lib/auth";
 import { findComparisonForUser } from "@/lib/queries";
 import type { DiffChangeItem } from "@/lib/structured-diff";
@@ -22,31 +24,28 @@ export default async function ComparisonPage({ params }: PageProps) {
   }
 
   return (
-    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading comparison…</div>}>
-      <ComparisonWorkspace
-        comparison={{
-          id: comparison.id,
-          projectId: comparison.projectId,
-          status: comparison.status,
-          engineVersion: comparison.engineVersion,
-          durationMs: comparison.durationMs,
-          totalChanges: comparison.totalChanges,
-          errorMessage: comparison.errorMessage,
-          createdAt: comparison.createdAt.toISOString(),
-          project: comparison.project,
-          baseVersion: {
-            id: comparison.baseVersion.id,
-            label: comparison.baseVersion.label,
-            title: comparison.baseVersion.title,
-          },
-          targetVersion: {
-            id: comparison.targetVersion.id,
-            label: comparison.targetVersion.label,
-            title: comparison.targetVersion.title,
-          },
-        }}
-        changes={comparison.changes as DiffChangeItem[]}
-      />
-    </Suspense>
+    <>
+      <HeaderBreadcrumb>
+        <span className="text-muted-foreground">/</span>
+        <Link
+          href={`/projects/${comparison.projectId}`}
+          className="truncate text-sm text-muted-foreground hover:text-foreground"
+        >
+          {comparison.project.name}
+        </Link>
+        <span className="text-muted-foreground">/</span>
+        <span className="min-w-0 truncate text-sm font-medium">
+          {comparison.baseVersion.label} → {comparison.targetVersion.label}
+        </span>
+      </HeaderBreadcrumb>
+
+      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading comparison…</div>}>
+        <ComparisonWorkspace
+          status={comparison.status}
+          errorMessage={comparison.errorMessage}
+          changes={comparison.changes as DiffChangeItem[]}
+        />
+      </Suspense>
+    </>
   );
 }

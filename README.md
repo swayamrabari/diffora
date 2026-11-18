@@ -20,7 +20,7 @@ The app is complete end to end:
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
 - Slim app header shared across the product, and a full-width app layout on every page.
 - Full-height comparison workspace with a type sidebar and full-width change cards.
-- Cards use color-coded change-type and category badges, with matching diff line colors.
+- Cards use color-coded change-type badges, neutral category/subtype badges, and matching diff line colors.
 - Dashboard shows projects and totals only; recent comparisons were removed.
 - Project comparisons are cards with added/removed/modified/deprecated summaries and a **View changes** action.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.
@@ -206,7 +206,8 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The project page shows each comparison as a card with its summary and a **View changes** button.
-- The comparison page uses a slim header with the Diffora logo, project name, and `file 1 → file 2`.
+- The app header is sticky and fixed-layout: brand on the left, conditional breadcrumb, and user/logout on the right. It shows `project / file 1 → file 2` on comparison pages.
+- Export and delete live on each project comparison card, not in the comparison header.
 - The workspace fills the viewport. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
 - Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
