@@ -18,7 +18,7 @@ The app is complete end to end:
 - Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
 - Project CRUD, version upload with engine validation, raw version viewer, compare dialog.
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
-- Single-page comparison workspace: collapsible summary, filters, grouped change tree, and a unified before/after diff with `-`/`+` lines and line numbers.
+- Full-height comparison workspace: a type sidebar and full-width change cards with focused source diffs, `-`/`+` lines, and line numbers.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.
 - Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
 - Full end-to-end test against Supabase: the reference pair stores **83 unique changes**, all with source hunks, exports all 83, and exposes no internal pointers.
@@ -202,8 +202,8 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The comparison page supports export and delete.
-- The workspace has no tabs. It shows a collapsible summary, filters, grouped changes, and a full-line source diff for the selected change.
-- The diff shows complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
+- The workspace fills the viewport below the header. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
+- Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 
 ## Next steps

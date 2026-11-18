@@ -124,3 +124,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Use only the exact base/target node range for each change. Added/removed blocks show every line; modified blocks are line-diffed inside the exact range and emit only `removed`/`added` lines. No surrounding context is emitted. Separated changed regions become separate hunks.
 - Consequences: Each sidebar entry now shows exactly one change with no unrelated highlights and no missing padding. The line numbers still locate the change. Older comparisons with context rows continue to render, but new comparisons produce only changed lines.
 
+## 2026-11-18 — Type sidebar with full-width change cards
+
+- Context: The nested change tree made it hard to scan a category and see the actual diffs. The page also scrolled as a normal document instead of feeling like a full-height commit review.
+- Decision: Replace the tree with a sidebar that lists change types and counts. Selecting a type renders that type's changes as full-width cards, each with its own focused source diff. The header stays fixed below the app bar, and the sidebar/detail split fills the remaining viewport height with independent scrolling.
+- Consequences: The comparison page no longer scrolls past the workspace. The detail area is a card list, filters live above the cards, and the tree/group-by controls are gone. No database or API changes were required.
+

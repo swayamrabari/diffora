@@ -16,14 +16,6 @@ export type DiffChangeItem = {
   source?: SourceDiff;
 };
 
-export type StructuredNode = {
-  id: string;
-  label: string;
-  count: number;
-  children: StructuredNode[];
-  changes: DiffChangeItem[];
-};
-
 export type DiffLine = {
   kind: "context" | "added" | "removed";
   text: string;
@@ -316,99 +308,4 @@ export function changeSearchText(change: DiffChangeItem): string {
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
-}
-
-function categoryRank(category: string): number {
-  const index = categoryOrder.indexOf(category);
-  return index === -1 ? categoryOrder.length : index;
-}
-
-function groupLabel(change: DiffChangeItem): string {
-  return changeSubject(change);
-}
-
-export function buildStructuredTree(
-  changes: DiffChangeItem[],
-  groupBy: "type" | "endpoint",
-): StructuredNode[] {
-  if (groupBy === "endpoint") {
-    const paths = new Map<string, Map<string, DiffChangeItem[]>>();
-    const noPath: DiffChangeItem[] = [];
-
-    for (const change of changes) {
-      if (!change.path) {
-        noPath.push(change);
-        continue;
-      }
-      const methods = paths.get(change.path) ?? new Map<string, DiffChangeItem[]>();
-      const key = change.method ?? "Path";
-      const items = methods.get(key) ?? [];
-      items.push(change);
-      methods.set(key, items);
-      paths.set(change.path, methods);
-    }
-
-    const nodes: StructuredNode[] = Array.from(paths.entries())
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([path, methods]) => {
-        const children = Array.from(methods.entries())
-          .sort(([left], [right]) => left.localeCompare(right))
-          .map(([method, items]) => ({
-            id: `endpoint:${path}:${method}`,
-            label: method,
-            count: items.length,
-            children: [],
-            changes: items,
-          }));
-        return {
-          id: `endpoint:${path}`,
-          label: path,
-          count: children.reduce((sum, child) => sum + child.count, 0),
-          children,
-          changes: [],
-        };
-      });
-
-    if (noPath.length > 0) {
-      nodes.push({
-        id: "endpoint:none",
-        label: "Components and other",
-        count: noPath.length,
-        children: [],
-        changes: noPath,
-      });
-    }
-    return nodes;
-  }
-
-  const categories = new Map<string, Map<string, DiffChangeItem[]>>();
-  for (const change of changes) {
-    const groups = categories.get(change.category) ?? new Map<string, DiffChangeItem[]>();
-    const label = groupLabel(change);
-    const items = groups.get(label) ?? [];
-    items.push(change);
-    groups.set(label, items);
-    categories.set(change.category, groups);
-  }
-
-  return Array.from(categories.entries())
-    .sort(([left], [right]) => categoryRank(left) - categoryRank(right))
-    .map(([category, groups]) => {
-      const children = Array.from(groups.entries())
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([label, items]) => ({
-          id: `type:${category}:${label}`,
-          label,
-          count: items.length,
-          children: [],
-          changes: items,
-        }));
-      return {
-        id: `type:${category}`,
-        label: categoryLabels[category] ?? humanize(category),
-        count: children.reduce((sum, child) => sum + child.count, 0),
-        children,
-        changes: [],
-      };
-    });
 }

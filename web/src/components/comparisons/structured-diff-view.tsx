@@ -1,21 +1,18 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   CodeBlock,
   CodeBlockContent,
-  CodeBlockHeader,
   CodeBlockLine,
-  CodeBlockTitle,
 } from "@/components/ui/code-block";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   buildChangeDiff,
-  buildStructuredTree,
   categoryLabels,
   categoryOrder,
   changeSearchText,
@@ -26,13 +23,17 @@ import {
   humanize,
   isDeprecatedChange,
   type DiffChangeItem,
-  type StructuredNode,
 } from "@/lib/structured-diff";
 import type { SourceHunk, SourceLine } from "@/types/comparison";
 
 type StructuredDiffViewProps = {
   changes: DiffChangeItem[];
 };
+
+function categoryRank(category: string): number {
+  const index = categoryOrder.indexOf(category);
+  return index === -1 ? categoryOrder.length : index;
+}
 
 function changeBadgeVariant(
   changeType: string,
@@ -47,82 +48,15 @@ function changeBadgeVariant(
   }
 }
 
-function StructuredTreeNode({
-  node,
-  selected,
-  collapsed,
-  onToggle,
-  onSelect,
-}: {
-  node: StructuredNode;
-  selected: string | null;
-  collapsed: Set<string>;
-  onToggle: (id: string) => void;
-  onSelect: (id: string) => void;
-}) {
-  const isCollapsed = collapsed.has(node.id);
-  const hasChildren = node.children.length > 0 || node.changes.length > 0;
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => onToggle(node.id)}
-        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
-        aria-expanded={!isCollapsed}
-      >
-        <span className="w-4 text-xs text-muted-foreground">
-          {hasChildren ? (isCollapsed ? "▸" : "▾") : ""}
-        </span>
-        <span className="min-w-0 flex-1 truncate font-medium">{node.label}</span>
-        <Badge variant="outline">{node.count}</Badge>
-      </button>
-
-      {!isCollapsed ? (
-        <div className="ml-4 border-l border-border pl-2">
-          {node.children.map((child) => (
-            <StructuredTreeNode
-              key={child.id}
-              node={child}
-              selected={selected}
-              collapsed={collapsed}
-              onToggle={onToggle}
-              onSelect={onSelect}
-            />
-          ))}
-          {node.changes.map((change) => (
-            <button
-              key={change.id}
-              type="button"
-              onClick={() => onSelect(change.id)}
-              className={`mt-0.5 flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm ${
-                selected === change.id ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-              }`}
-            >
-              <Badge
-                variant={changeBadgeVariant(change.changeType)}
-                className="mt-0.5 shrink-0"
-              >
-                {changeTypeLabel(change.changeType)}
-              </Badge>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate">{changeSubject(change)}</span>
-                <span
-                  className={`block truncate text-xs ${
-                    selected === change.id
-                      ? "text-primary-foreground/80"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {changeTitle(change)}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
+function cardAccent(changeType: string): string {
+  switch (changeType) {
+    case "added":
+      return "border-l-emerald-500";
+    case "removed":
+      return "border-l-red-500";
+    default:
+      return "border-l-amber-500";
+  }
 }
 
 function sourceTone(kind: SourceLine["kind"]): string {
@@ -177,7 +111,7 @@ function SourceLineRow({ line }: { line: SourceLine }) {
   );
 }
 
-function SourceDiffView({ hunks }: { hunks: SourceHunk[] }) {
+function SourceDiffBody({ hunks }: { hunks: SourceHunk[] }) {
   const rows: SourceLine[] = [];
   for (const [index, hunk] of hunks.entries()) {
     if (index > 0) {
@@ -186,76 +120,68 @@ function SourceDiffView({ hunks }: { hunks: SourceHunk[] }) {
     rows.push(...hunk.lines);
   }
 
-  const changed = rows.filter(
-    (line) => line.kind === "added" || line.kind === "removed",
-  ).length;
+  if (rows.length === 0) {
+    return (
+      <p className="px-4 py-6 text-sm text-muted-foreground">
+        No source lines to display for this change.
+      </p>
+    );
+  }
 
   return (
-    <CodeBlock>
-      <CodeBlockHeader>
-        <CodeBlockTitle>Source diff</CodeBlockTitle>
-        <span className="ms-auto text-xs text-muted-foreground">
-          {changed} changed {changed === 1 ? "line" : "lines"}
-        </span>
-      </CodeBlockHeader>
-      {rows.length === 0 ? (
-        <p className="border-t px-4 py-6 text-sm text-muted-foreground">
-          No source lines to display for this change.
-        </p>
-      ) : (
-        <CodeBlockContent className="max-h-[60vh] border-t">
-          {rows.map((line, index) => (
-            <SourceLineRow key={`${line.kind}-${index}`} line={line} />
-          ))}
-        </CodeBlockContent>
-      )}
+    <CodeBlock className="rounded-none border-0">
+      <CodeBlockContent className="px-4 py-3 [&>code]:w-full">
+        {rows.map((line, index) => (
+          <SourceLineRow key={`${line.kind}-${index}`} line={line} />
+        ))}
+      </CodeBlockContent>
     </CodeBlock>
   );
 }
 
-function ValueDiff({ change }: { change: DiffChangeItem }) {
+function ValueDiffBody({ change }: { change: DiffChangeItem }) {
   const lines = useMemo(() => buildChangeDiff(change), [change]);
 
+  if (lines.length === 0) {
+    return (
+      <p className="px-4 py-6 text-sm text-muted-foreground">
+        No values to display for this change.
+      </p>
+    );
+  }
+
   return (
-    <CodeBlock>
-      <CodeBlockHeader>
-        <CodeBlockTitle>Value diff</CodeBlockTitle>
-        <span className="ms-auto text-xs text-muted-foreground">
-          {lines.length} {lines.length === 1 ? "line" : "lines"}
-        </span>
-      </CodeBlockHeader>
-      {lines.length === 0 ? (
-        <p className="border-t px-4 py-6 text-sm text-muted-foreground">
-          No values to display for this change.
-        </p>
-      ) : (
-        <CodeBlockContent lineNumbers className="max-h-[60vh] border-t">
-          {lines.map((line, index) => (
-            <CodeBlockLine
-              key={`${line.kind}-${index}`}
-              variant={line.kind === "context" ? "default" : line.kind}
-              className={
-                line.kind === "added" || line.kind === "removed"
-                  ? sourceTone(line.kind)
-                  : undefined
-              }
-            >
-              {line.text}
-            </CodeBlockLine>
-          ))}
-        </CodeBlockContent>
-      )}
+    <CodeBlock className="rounded-none border-0">
+      <CodeBlockContent lineNumbers className="px-4 py-3 [&>code]:w-full">
+        {lines.map((line, index) => (
+          <CodeBlockLine
+            key={`${line.kind}-${index}`}
+            variant={line.kind === "context" ? "default" : line.kind}
+            className={
+              line.kind === "added" || line.kind === "removed"
+                ? sourceTone(line.kind)
+                : undefined
+            }
+          >
+            {line.text}
+          </CodeBlockLine>
+        ))}
+      </CodeBlockContent>
     </CodeBlock>
   );
 }
 
-function ChangeDetail({ change }: { change: DiffChangeItem }) {
+function ChangeCard({ change }: { change: DiffChangeItem }) {
   const tags = changeTags(change);
   const sourceHunks = change.source?.hunks ?? [];
 
   return (
-    <div>
-      <div className="border-b border-border px-5 py-4">
+    <article
+      className={`overflow-hidden rounded-lg border border-l-4 border-border bg-card ${cardAccent(
+        change.changeType,
+      )}`}
+    >
+      <header className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={changeBadgeVariant(change.changeType)}>
             {changeTypeLabel(change.changeType)}
@@ -266,18 +192,55 @@ function ChangeDetail({ change }: { change: DiffChangeItem }) {
             </Badge>
           ))}
         </div>
-        <h2 className="mt-3 text-lg font-semibold">{changeSubject(change)}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{changeTitle(change)}</p>
-      </div>
+        <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <h3 className="min-w-0 break-words text-sm font-semibold">
+            {changeSubject(change)}
+          </h3>
+          <p className="text-sm text-muted-foreground">{changeTitle(change)}</p>
+        </div>
+      </header>
 
-      <div className="p-5">
+      <div className="border-t border-border">
         {sourceHunks.length > 0 ? (
-          <SourceDiffView hunks={sourceHunks} />
+          <SourceDiffBody hunks={sourceHunks} />
         ) : (
-          <ValueDiff change={change} />
+          <ValueDiffBody change={change} />
         )}
       </div>
-    </div>
+    </article>
+  );
+}
+
+function TypeButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex shrink-0 items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm transition-colors lg:w-full ${
+        active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+      }`}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      <span
+        className={`rounded-full px-2 py-0.5 text-[11px] ${
+          active
+            ? "bg-primary-foreground/15 text-primary-foreground"
+            : "bg-muted text-muted-foreground"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
   );
 }
 
@@ -285,15 +248,30 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   const q = searchParams.get("sc_q") ?? "";
   const category = searchParams.get("sc_category") ?? "";
   const changeType = searchParams.get("sc_type") ?? "";
   const method = searchParams.get("sc_method") ?? "";
   const deprecatedOnly = searchParams.get("sc_deprecated") === "1";
-  const groupBy = searchParams.get("sc_group") === "endpoint" ? "endpoint" : "type";
-  const selected = searchParams.get("sc_change");
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const change of changes) {
+      counts.set(change.category, (counts.get(change.category) ?? 0) + 1);
+    }
+    return Array.from(counts.entries()).sort(
+      ([left], [right]) => categoryRank(left) - categoryRank(right),
+    );
+  }, [changes]);
+
+  const methods = useMemo(
+    () =>
+      Array.from(
+        new Set(changes.map((change) => change.method).filter(Boolean) as string[]),
+      ).sort(),
+    [changes],
+  );
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -317,23 +295,9 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     });
   }, [category, changeType, changes, deprecatedOnly, method, q]);
 
-  const tree = useMemo(() => buildStructuredTree(filtered, groupBy), [filtered, groupBy]);
-  const selectedChange = filtered.find((change) => change.id === selected) ?? null;
-
-  const categories = useMemo(
-    () =>
-      Array.from(new Set(changes.map((change) => change.category))).sort(
-        (left, right) => categoryOrder.indexOf(left) - categoryOrder.indexOf(right),
-      ),
-    [changes],
-  );
-  const methods = useMemo(
-    () =>
-      Array.from(
-        new Set(changes.map((change) => change.method).filter(Boolean) as string[]),
-      ).sort(),
-    [changes],
-  );
+  const selectedLabel = category
+    ? categoryLabels[category] ?? humanize(category)
+    : "All changes";
 
   function update(values: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -348,137 +312,119 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
-  function toggleNode(id: string) {
-    setCollapsed((current) => {
-      const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  function clear() {
+  function clearFilters() {
     update({
       sc_q: null,
-      sc_category: null,
       sc_type: null,
       sc_method: null,
       sc_deprecated: null,
-      sc_change: null,
     });
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={q}
-          onChange={(event) => update({ sc_q: event.target.value || null, sc_change: null })}
-          placeholder="Search changes…"
-          className="min-w-[240px] flex-1"
-        />
-        <select
-          value={category}
-          onChange={(event) =>
-            update({ sc_category: event.target.value || null, sc_change: null })
-          }
-          className="h-9 rounded-md border border-input bg-transparent px-2.5 text-sm"
-        >
-          <option value="">All types</option>
-          {categories.map((item) => (
-            <option key={item} value={item}>
-              {categoryLabels[item] ?? humanize(item)}
-            </option>
-          ))}
-        </select>
-        <select
-          value={changeType}
-          onChange={(event) => update({ sc_type: event.target.value || null, sc_change: null })}
-          className="h-9 rounded-md border border-input bg-transparent px-2.5 text-sm"
-        >
-          <option value="">All changes</option>
-          <option value="added">Added</option>
-          <option value="removed">Removed</option>
-          <option value="modified">Modified</option>
-        </select>
-        <select
-          value={method}
-          onChange={(event) => update({ sc_method: event.target.value || null, sc_change: null })}
-          className="h-9 rounded-md border border-input bg-transparent px-2.5 text-sm"
-        >
-          <option value="">All methods</option>
-          {methods.map((item) => (
-            <option key={item} value={item}>
-              {item}
-            </option>
-          ))}
-        </select>
-        <select
-          value={groupBy}
-          onChange={(event) =>
-            update({ sc_group: event.target.value === "endpoint" ? "endpoint" : null })
-          }
-          className="h-9 rounded-md border border-input bg-transparent px-2.5 text-sm"
-        >
-          <option value="type">Group by type</option>
-          <option value="endpoint">Group by endpoint</option>
-        </select>
-        <Button
-          type="button"
-          variant={deprecatedOnly ? "default" : "outline"}
-          onClick={() =>
-            update({ sc_deprecated: deprecatedOnly ? null : "1", sc_change: null })
-          }
-        >
-          Deprecated
-        </Button>
-        <Button type="button" variant="outline" onClick={clear}>
-          Clear
-        </Button>
-      </div>
-
-      <div className="text-xs text-muted-foreground">
-        {filtered.length} of {changes.length} changes
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          <ScrollArea className="h-[68vh] p-2">
-            {tree.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                No changes match these filters.
-              </p>
-            ) : (
-              tree.map((node) => (
-                <StructuredTreeNode
-                  key={node.id}
-                  node={node}
-                  selected={selected}
-                  collapsed={collapsed}
-                  onToggle={toggleNode}
-                  onSelect={(id) => update({ sc_change: id })}
-                />
-              ))
-            )}
-          </ScrollArea>
+    <div className="flex h-full min-h-0 w-full flex-col lg:flex-row">
+      <aside className="flex max-h-40 shrink-0 flex-col border-b border-border bg-muted/20 lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
+        <div className="hidden shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3 lg:flex">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Change types
+          </span>
+          <Badge variant="outline">{changes.length}</Badge>
         </div>
+        <div className="flex gap-1 overflow-x-auto p-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:p-3">
+          <TypeButton
+            label="All changes"
+            count={changes.length}
+            active={!category}
+            onClick={() => update({ sc_category: null })}
+          />
+          {categoryCounts.map(([item, count]) => (
+            <TypeButton
+              key={item}
+              label={categoryLabels[item] ?? humanize(item)}
+              count={count}
+              active={category === item}
+              onClick={() => update({ sc_category: item })}
+            />
+          ))}
+        </div>
+      </aside>
 
-        <div className="h-fit overflow-hidden rounded-lg border border-border bg-card">
-          {selectedChange ? (
-            <ChangeDetail change={selectedChange} />
-          ) : (
-            <div className="px-5 py-16 text-center">
-              <p className="text-sm font-medium">Select a change</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pick a change from the list to see its unified diff.
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="shrink-0 border-b border-border px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-sm font-semibold">{selectedLabel}</h2>
+              <p className="text-xs text-muted-foreground">
+                {filtered.length} of {changes.length} changes
               </p>
             </div>
-          )}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Input
+              value={q}
+              onChange={(event) => update({ sc_q: event.target.value || null })}
+              placeholder="Search changes…"
+              className="h-8 min-w-[200px] flex-1"
+            />
+            <select
+              value={changeType}
+              onChange={(event) => update({ sc_type: event.target.value || null })}
+              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm"
+            >
+              <option value="">All changes</option>
+              <option value="added">Added</option>
+              <option value="removed">Removed</option>
+              <option value="modified">Modified</option>
+            </select>
+            <select
+              value={method}
+              onChange={(event) => update({ sc_method: event.target.value || null })}
+              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm"
+            >
+              <option value="">All methods</option>
+              {methods.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant={deprecatedOnly ? "default" : "outline"}
+              className="h-8 px-3"
+              onClick={() =>
+                update({ sc_deprecated: deprecatedOnly ? null : "1" })
+              }
+            >
+              Deprecated
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-8 px-3"
+              onClick={clearFilters}
+            >
+              Clear
+            </Button>
+          </div>
         </div>
-      </div>
+
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-4 p-4">
+            {filtered.length === 0 ? (
+              <div className="rounded-lg border border-border bg-card px-5 py-16 text-center">
+                <p className="text-sm font-medium">No changes match these filters</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Choose another type or clear the filters.
+                </p>
+              </div>
+            ) : (
+              filtered.map((change) => <ChangeCard key={change.id} change={change} />)
+            )}
+          </div>
+        </ScrollArea>
+      </section>
     </div>
   );
 }
