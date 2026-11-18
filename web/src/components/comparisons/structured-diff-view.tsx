@@ -121,14 +121,14 @@ function SourceLineRow({ line }: { line: SourceLine }) {
       variant={line.kind === "context" ? "default" : line.kind}
       className={sourceTone(line.kind)}
     >
-      <span className="flex min-w-max items-baseline">
+      <span className="grid min-w-max grid-cols-[3rem_3rem_1fr] items-baseline">
         <span
-          className={`w-12 shrink-0 select-none pr-2 text-right font-mono text-sm ${gutter}`}
+          className={`select-none pr-3 text-right font-mono text-sm tabular-nums ${gutter}`}
         >
           {line.oldLine ?? ""}
         </span>
         <span
-          className={`w-12 shrink-0 select-none pr-3 text-right font-mono text-sm ${gutter}`}
+          className={`select-none pr-3 text-right font-mono text-sm tabular-nums ${gutter}`}
         >
           {line.newLine ?? ""}
         </span>
