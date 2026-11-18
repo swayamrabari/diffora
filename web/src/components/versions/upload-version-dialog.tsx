@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog } from "@/components/ui/app-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -88,8 +93,12 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
       <Button type="button" variant="outline" onClick={openDialog}>
         Upload version
       </Button>
-      <Dialog open={open} onClose={close} title="Upload version">
-        <form className="space-y-4" onSubmit={onSubmit}>
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload version</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -142,7 +151,8 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
               {loading ? "Uploading…" : "Upload"}
             </Button>
           </div>
-        </form>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );

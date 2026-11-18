@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog } from "@/components/ui/app-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -114,8 +119,12 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
         Compare
       </Button>
 
-      <Dialog open={open} onClose={close} title="Compare versions">
-        <form className="space-y-4" onSubmit={onSubmit}>
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Compare versions</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -198,7 +207,8 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
               {loading ? "Comparing…" : "Run comparison"}
             </Button>
           </div>
-        </form>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );

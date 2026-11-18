@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog } from "@/components/ui/app-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,8 +66,12 @@ export function NewProjectDialog() {
       <Button type="button" onClick={() => setOpen(true)}>
         New project
       </Button>
-      <Dialog open={open} onClose={close} title="New project">
-        <form className="space-y-4" onSubmit={onSubmit}>
+      <Dialog open={open} onOpenChange={(next) => !next && close()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New project</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={onSubmit}>
           {error ? (
             <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -102,7 +111,8 @@ export function NewProjectDialog() {
               {loading ? "Creating…" : "Create project"}
             </Button>
           </div>
-        </form>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );
