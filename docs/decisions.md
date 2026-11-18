@@ -162,3 +162,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Show only two tags per card: change type and category. Remove the subcategory and deprecated tags from the card header. Change the shared badge radius from pill to `rounded-md`, including project/version status and summary tags.
 - Consequences: Cards scan faster and keep the change-type color meaningful. Deprecated changes remain filterable and their titles still say “Marked deprecated”; they no longer add a third tag. All badges now share a softer rectangular shape.
 
+## 2026-11-18 — Sidebar theme and shadcn select filters
+
+- Context: The comparison sidebar had a “Change types” header and count pills, and its selected item used the primary solid color. Native `<select>` controls also did not match the shadcn visual system.
+- Decision: Remove the sidebar header and all count badges. Use `sidebar`, `sidebar-border`, `sidebar-accent`, and `sidebar-foreground` tokens with the accent as the selected state. Replace native dropdowns with shadcn Select in the comparison filters and the compare dialog.
+- Consequences: The sidebar is quieter and theme-consistent, the selected section is a soft accent rather than a high-contrast fill, and every dropdown now has a consistent selected state and popup.
+

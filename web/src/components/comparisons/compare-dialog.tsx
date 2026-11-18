@@ -4,10 +4,16 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Dialog,
-  fieldClass,
   primaryButtonClass,
   secondaryButtonClass,
 } from "@/components/ui/app-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type VersionOption = {
   id: string;
@@ -123,44 +129,62 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
             <label htmlFor="base-version" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
               Base version
             </label>
-            <select
-              id="base-version"
-              className={fieldClass}
-              value={baseVersionId}
-              onChange={(event) => setBaseVersionId(event.target.value)}
-              required
-            >
-              <option value="">Choose a version</option>
-              {versions
+            <Select
+              value={baseVersionId || null}
+              onValueChange={(value) =>
+                setBaseVersionId(value ? String(value) : "")
+              }
+              items={versions
                 .filter((version) => version.id !== targetVersionId)
-                .map((version) => (
-                  <option key={version.id} value={version.id}>
-                    {version.label} ({version.specFormat})
-                  </option>
-                ))}
-            </select>
+                .map((version) => ({
+                  value: version.id,
+                  label: `${version.label} (${version.specFormat})`,
+                }))}
+            >
+              <SelectTrigger id="base-version" className="mt-1 w-full">
+                <SelectValue placeholder="Choose a version" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {versions
+                  .filter((version) => version.id !== targetVersionId)
+                  .map((version) => (
+                    <SelectItem key={version.id} value={version.id}>
+                      {version.label} ({version.specFormat})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label htmlFor="target-version" className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
               Target version
             </label>
-            <select
-              id="target-version"
-              className={fieldClass}
-              value={targetVersionId}
-              onChange={(event) => setTargetVersionId(event.target.value)}
-              required
-            >
-              <option value="">Choose a version</option>
-              {versions
+            <Select
+              value={targetVersionId || null}
+              onValueChange={(value) =>
+                setTargetVersionId(value ? String(value) : "")
+              }
+              items={versions
                 .filter((version) => version.id !== baseVersionId)
-                .map((version) => (
-                  <option key={version.id} value={version.id}>
-                    {version.label} ({version.specFormat})
-                  </option>
-                ))}
-            </select>
+                .map((version) => ({
+                  value: version.id,
+                  label: `${version.label} (${version.specFormat})`,
+                }))}
+            >
+              <SelectTrigger id="target-version" className="mt-1 w-full">
+                <SelectValue placeholder="Choose a version" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {versions
+                  .filter((version) => version.id !== baseVersionId)
+                  .map((version) => (
+                    <SelectItem key={version.id} value={version.id}>
+                      {version.label} ({version.specFormat})
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {formatMismatch ? (

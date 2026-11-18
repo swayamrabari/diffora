@@ -208,7 +208,8 @@ With at least two versions uploaded, use **Compare** on the project page.
 - The project page shows each comparison as a card with its summary and a **View changes** button.
 - The app header is sticky and fixed-layout: brand on the left, conditional mono breadcrumb, and user/logout on the right. It shows `project / file 1 → file 2` on comparison pages.
 - Export and delete live on each project comparison card, not in the comparison header.
-- The workspace fills the viewport. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
+- The workspace fills the viewport. A sidebar lists change types using the shadcn sidebar theme, without a header or count badges. Selecting a type shows that type's changes as full-width cards.
+- Filters use the shadcn Select component with a visible selected state.
 - Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 

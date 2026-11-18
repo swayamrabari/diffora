@@ -12,6 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   buildChangeDiff,
   categoryLabels,
   categoryOrder,
@@ -198,12 +205,10 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
 
 function TypeButton({
   label,
-  count,
   active,
   onClick,
 }: {
   label: string;
-  count: number;
   active: boolean;
   onClick: () => void;
 }) {
@@ -211,20 +216,13 @@ function TypeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm transition-colors lg:w-full ${
-        active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+      className={`flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-2 text-left text-sm transition-colors lg:w-full ${
+        active
+          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+          : "text-sidebar-foreground hover:bg-sidebar-accent/60"
       }`}
     >
       <span className="min-w-0 truncate">{label}</span>
-      <span
-        className={`rounded-md px-2 py-0.5 text-[11px] ${
-          active
-            ? "bg-primary-foreground/15 text-primary-foreground"
-            : "bg-muted text-muted-foreground"
-        }`}
-      >
-        {count}
-      </span>
     </button>
   );
 }
@@ -240,15 +238,13 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
   const method = searchParams.get("sc_method") ?? "";
   const deprecatedOnly = searchParams.get("sc_deprecated") === "1";
 
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const change of changes) {
-      counts.set(change.category, (counts.get(change.category) ?? 0) + 1);
-    }
-    return Array.from(counts.entries()).sort(
-      ([left], [right]) => categoryRank(left) - categoryRank(right),
-    );
-  }, [changes]);
+  const categories = useMemo(
+    () =>
+      Array.from(new Set(changes.map((change) => change.category))).sort(
+        (left, right) => categoryRank(left) - categoryRank(right),
+      ),
+    [changes],
+  );
 
   const methods = useMemo(
     () =>
@@ -284,6 +280,17 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     ? categoryLabels[category] ?? humanize(category)
     : "All changes";
 
+  const changeTypeItems = [
+    { value: "all", label: "All changes" },
+    { value: "added", label: "Added" },
+    { value: "removed", label: "Removed" },
+    { value: "modified", label: "Modified" },
+  ];
+  const methodItems = [
+    { value: "all", label: "All methods" },
+    ...methods.map((item) => ({ value: item, label: item })),
+  ];
+
   function update(values: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(values)) {
@@ -308,25 +315,17 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col lg:flex-row">
-      <aside className="flex max-h-40 shrink-0 flex-col border-b border-border bg-muted/20 lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
-        <div className="hidden shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3 lg:flex">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Change types
-          </span>
-          <Badge variant="outline">{changes.length}</Badge>
-        </div>
+      <aside className="flex max-h-40 shrink-0 flex-col border-b border-sidebar-border bg-sidebar text-sidebar-foreground lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
         <div className="flex gap-1 overflow-x-auto p-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:p-3">
           <TypeButton
             label="All changes"
-            count={changes.length}
             active={!category}
             onClick={() => update({ sc_category: null })}
           />
-          {categoryCounts.map(([item, count]) => (
+          {categories.map((item) => (
             <TypeButton
               key={item}
               label={categoryLabels[item] ?? humanize(item)}
-              count={count}
               active={category === item}
               onClick={() => update({ sc_category: item })}
             />
@@ -352,28 +351,42 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
               placeholder="Search changes…"
               className="h-8 min-w-[200px] flex-1"
             />
-            <select
-              value={changeType}
-              onChange={(event) => update({ sc_type: event.target.value || null })}
-              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm"
+            <Select
+              value={changeType || "all"}
+              onValueChange={(value) =>
+                update({ sc_type: value === "all" ? null : String(value) })
+              }
+              items={changeTypeItems}
             >
-              <option value="">All changes</option>
-              <option value="added">Added</option>
-              <option value="removed">Removed</option>
-              <option value="modified">Modified</option>
-            </select>
-            <select
-              value={method}
-              onChange={(event) => update({ sc_method: event.target.value || null })}
-              className="h-8 rounded-md border border-input bg-transparent px-2.5 text-sm"
+              <SelectTrigger size="sm" className="w-[145px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {changeTypeItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={method || "all"}
+              onValueChange={(value) =>
+                update({ sc_method: value === "all" ? null : String(value) })
+              }
+              items={methodItems}
             >
-              <option value="">All methods</option>
-              {methods.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger size="sm" className="w-[145px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {methodItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               type="button"
               variant={deprecatedOnly ? "default" : "outline"}

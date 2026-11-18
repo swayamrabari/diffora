@@ -66,8 +66,8 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 
 - One page, no tabs. The sticky app header has a fixed layout: Diffora brand, a conditional breadcrumb, and user/logout. On a comparison it shows `project / file 1 → file 2`; on a project it shows `project`; on the dashboard only brand and user remain.
 - Comparisons expose export/delete from their project card, not from the header.
-- A sidebar lists change types (Endpoints, Schemas, etc.) with counts. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
-- Filters: free text, change type, HTTP method, and a deprecated toggle.
+- A sidebar lists change types (Endpoints, Schemas, etc.) using the shadcn sidebar theme, with no header and no count badges. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
+- Filters: free text, change type, HTTP method, and a deprecated toggle. Dropdowns use the shadcn Select with a visible selected state.
 - Each card shows deterministic, user-friendly title and exactly two tags: change type and category. Change type uses green/red/violet tinted badges; the category badge is neutral. Badges are slightly rounded, not pills. Internal pointers are never displayed.
 - Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card, with uniform vertical padding. Only changed lines are shown.
 - The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
