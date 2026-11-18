@@ -17,7 +17,6 @@ import {
   categoryOrder,
   changeSearchText,
   changeSubject,
-  changeTags,
   changeTitle,
   changeTypeLabel,
   humanize,
@@ -35,46 +34,64 @@ function categoryRank(category: string): number {
   return index === -1 ? categoryOrder.length : index;
 }
 
-function changeBadgeVariant(
-  changeType: string,
-): "default" | "secondary" | "outline" | "destructive" {
-  switch (changeType) {
-    case "added":
-      return "secondary";
-    case "removed":
-      return "destructive";
-    default:
-      return "outline";
-  }
+const changeTypeBadgeClasses: Record<string, string> = {
+  added:
+    "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  removed: "border-destructive/20 bg-destructive/10 text-destructive",
+  modified:
+    "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+};
+
+const categoryBadgeClasses: Record<string, string> = {
+  endpoint:
+    "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  operation:
+    "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+  parameter:
+    "border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300",
+  request:
+    "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  response:
+    "border-orange-500/20 bg-orange-500/10 text-orange-700 dark:text-orange-300",
+  header:
+    "border-lime-600/20 bg-lime-500/10 text-lime-700 dark:text-lime-300",
+  schema:
+    "border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300",
+  security:
+    "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300",
+  server:
+    "border-teal-500/20 bg-teal-500/10 text-teal-700 dark:text-teal-300",
+  metadata:
+    "border-indigo-500/20 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
+  webhook:
+    "border-pink-500/20 bg-pink-500/10 text-pink-700 dark:text-pink-300",
+  other: "border-border bg-muted/40 text-muted-foreground",
+};
+
+function changeTypeBadgeClass(changeType: string): string {
+  return changeTypeBadgeClasses[changeType] ?? "border-border bg-muted/40 text-muted-foreground";
 }
 
-function cardAccent(changeType: string): string {
-  switch (changeType) {
-    case "added":
-      return "border-l-emerald-500";
-    case "removed":
-      return "border-l-red-500";
-    default:
-      return "border-l-amber-500";
-  }
+function categoryBadgeClass(category: string): string {
+  return categoryBadgeClasses[category] ?? categoryBadgeClasses.other;
 }
 
 function sourceTone(kind: SourceLine["kind"]): string {
   if (kind === "added") {
-    return "bg-emerald-500/10 text-emerald-800 after:text-emerald-600 dark:text-emerald-300 dark:after:text-emerald-400";
+    return "bg-emerald-500/10 text-emerald-700 after:text-emerald-700 dark:text-emerald-300 dark:after:text-emerald-300";
   }
   if (kind === "removed") {
-    return "bg-red-500/10 text-red-800 after:text-red-600 dark:text-red-300 dark:after:text-red-400";
+    return "bg-destructive/10 text-destructive after:text-destructive dark:bg-destructive/20";
   }
-  return "";
+  return "text-muted-foreground";
 }
 
 function sourceGutterTone(kind: SourceLine["kind"]): string {
   if (kind === "added") {
-    return "text-emerald-700 dark:text-emerald-400";
+    return "text-emerald-700 dark:text-emerald-300";
   }
   if (kind === "removed") {
-    return "text-red-700 dark:text-red-400";
+    return "text-destructive";
   }
   return "text-muted-foreground";
 }
@@ -96,12 +113,12 @@ function SourceLineRow({ line }: { line: SourceLine }) {
     >
       <span className="flex min-w-max items-baseline">
         <span
-          className={`w-11 shrink-0 select-none pr-2 text-right font-mono text-[11px] ${gutter}`}
+          className={`w-12 shrink-0 select-none pr-2 text-right font-mono text-sm ${gutter}`}
         >
           {line.oldLine ?? ""}
         </span>
         <span
-          className={`w-11 shrink-0 select-none pr-3 text-right font-mono text-[11px] ${gutter}`}
+          className={`w-12 shrink-0 select-none pr-3 text-right font-mono text-sm ${gutter}`}
         >
           {line.newLine ?? ""}
         </span>
@@ -129,7 +146,7 @@ function SourceDiffBody({ hunks }: { hunks: SourceHunk[] }) {
   }
 
   return (
-    <CodeBlock className="rounded-none border-0">
+    <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
       <CodeBlockContent className="px-4 py-3 [&>code]:w-full">
         {rows.map((line, index) => (
           <SourceLineRow key={`${line.kind}-${index}`} line={line} />
@@ -151,17 +168,13 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
   }
 
   return (
-    <CodeBlock className="rounded-none border-0">
+    <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
       <CodeBlockContent lineNumbers className="px-4 py-3 [&>code]:w-full">
         {lines.map((line, index) => (
           <CodeBlockLine
             key={`${line.kind}-${index}`}
             variant={line.kind === "context" ? "default" : line.kind}
-            className={
-              line.kind === "added" || line.kind === "removed"
-                ? sourceTone(line.kind)
-                : undefined
-            }
+            className={sourceTone(line.kind)}
           >
             {line.text}
           </CodeBlockLine>
@@ -172,25 +185,32 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
 }
 
 function ChangeCard({ change }: { change: DiffChangeItem }) {
-  const tags = changeTags(change);
   const sourceHunks = change.source?.hunks ?? [];
 
   return (
-    <article
-      className={`overflow-hidden rounded-lg border border-l-4 border-border bg-card ${cardAccent(
-        change.changeType,
-      )}`}
-    >
+    <article className="overflow-hidden rounded-lg border border-border bg-card">
       <header className="px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={changeBadgeVariant(change.changeType)}>
+          <Badge
+            variant="outline"
+            className={changeTypeBadgeClass(change.changeType)}
+          >
             {changeTypeLabel(change.changeType)}
           </Badge>
-          {tags.map((tag) => (
-            <Badge key={tag} variant={tag === "Deprecated" ? "default" : "outline"}>
-              {tag}
+          <Badge variant="outline" className={categoryBadgeClass(change.category)}>
+            {categoryLabels[change.category] ?? humanize(change.category)}
+          </Badge>
+          {change.subcategory ? (
+            <Badge
+              variant="outline"
+              className="border-border bg-muted/40 text-muted-foreground"
+            >
+              {humanize(change.subcategory)}
             </Badge>
-          ))}
+          ) : null}
+          {isDeprecatedChange(change) ? (
+            <Badge variant="destructive">Deprecated</Badge>
+          ) : null}
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <h3 className="min-w-0 break-words text-sm font-semibold">
@@ -411,7 +431,7 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
         </div>
 
         <ScrollArea className="min-h-0 flex-1">
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 px-4 pt-4 pb-24">
             {filtered.length === 0 ? (
               <div className="rounded-lg border border-border bg-card px-5 py-16 text-center">
                 <p className="text-sm font-medium">No changes match these filters</p>

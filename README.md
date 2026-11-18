@@ -18,7 +18,9 @@ The app is complete end to end:
 - Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
 - Project CRUD, version upload with engine validation, raw version viewer, compare dialog.
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
-- Slim app header shared across the product, plus a full-height comparison workspace with a type sidebar and full-width change cards.
+- Slim app header shared across the product, and a full-width app layout on every page.
+- Full-height comparison workspace with a type sidebar and full-width change cards.
+- Cards use color-coded change-type and category badges, with matching diff line colors.
 - Dashboard shows projects and totals only; recent comparisons were removed.
 - Project comparisons are cards with added/removed/modified/deprecated summaries and a **View changes** action.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.

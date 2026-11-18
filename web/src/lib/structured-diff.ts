@@ -179,17 +179,6 @@ export function changeTitle(change: DiffChangeItem): string {
   return `${noun} changed`;
 }
 
-export function changeTags(change: DiffChangeItem): string[] {
-  const tags = [categoryLabels[change.category] ?? humanize(change.category)];
-  if (change.category === "parameter" && change.subcategory) {
-    tags.push(humanize(change.subcategory));
-  }
-  if (isDeprecatedChange(change)) {
-    tags.push("Deprecated");
-  }
-  return tags;
-}
-
 export function changeTypeLabel(changeType: string): string {
   if (changeType === "added") {
     return "Added";

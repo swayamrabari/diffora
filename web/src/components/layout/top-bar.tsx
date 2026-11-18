@@ -33,7 +33,7 @@ export function TopBar({ user }: TopBarProps) {
 
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex h-12 max-w-6xl items-center gap-6 px-4">
+      <div className="flex h-12 w-full items-center gap-6 px-4 sm:px-6 lg:px-8">
         <Brand />
 
         <nav className="flex items-center gap-4 text-sm">

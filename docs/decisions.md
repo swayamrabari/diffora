@@ -136,3 +136,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Use one slim app header style across the app. The dashboard keeps totals and projects only. The project page renders comparisons as cards with added/removed/modified/deprecated summaries and a **View changes** action. The comparison route hides the global top bar and owns a slim header with the Diffora logo, project, and file labels, followed only by the type sidebar and card detail area.
 - Consequences: The comparison page is a single full-viewport surface with no redundant header or summary block. The project page is easier to scan, and the dashboard no longer duplicates comparison data.
 
+## 2026-11-18 — Full-width shell and semantic badge colors
+
+- Context: The app was capped at a narrow max width, card side-stripes carried the change-type color, category badges were visually flat, and diff line numbers/markers did not share the code color.
+- Decision: Remove the max-width cap from the app shell and top bar. Replace card side-stripes with green/red/blue change-type badges and a separate palette for category badges. Match the code block background to the card, and use the same font, size, and color for line numbers, the `+`/`-` marker, and code.
+- Consequences: All pages use the full viewport width with responsive padding. The comparison cards are cleaner, category colors are distinct from change-type colors, and diff rows read as a single visual unit. The card list has extra bottom scroll padding.
+

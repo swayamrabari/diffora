@@ -241,7 +241,7 @@ export default async function ProjectPage({ params }: PageProps) {
                     <span className="rounded-full bg-red-50 px-2 py-1 font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
                       Removed {summary.removed}
                     </span>
-                    <span className="rounded-full bg-amber-50 px-2 py-1 font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    <span className="rounded-full bg-sky-50 px-2 py-1 font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
                       Modified {summary.modified}
                     </span>
                     {summary.deprecated > 0 ? (
