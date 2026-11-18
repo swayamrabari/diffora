@@ -14,6 +14,7 @@ type context struct {
 	subcategory string
 	path        string
 	method      string
+	fieldPrefix string
 }
 
 type builder struct {
@@ -158,7 +159,7 @@ func (b *builder) walkOperation(opDiff map[string]any, baseSegs, targetSegs []st
 			}
 		case "requestBody":
 			if node, ok := asMap(value); ok {
-				b.walkRequestBody(node, baseSegs, targetSegs, path, method)
+				b.walkRequestBody(node, appendSegment(baseSegs, "requestBody"), appendSegment(targetSegs, "requestBody"), path, method)
 			}
 		case "responses":
 			if node, ok := asMap(value); ok {
@@ -243,7 +244,11 @@ func (b *builder) walkParameters(paramDiff map[string]any, baseSegs, targetSegs 
 }
 
 func (b *builder) walkParameterDiff(diff map[string]any, baseSegs, targetSegs []string, path, method, location, name string) {
-	c := context{category: "parameter", subcategory: location, path: path, method: method}
+	prefix := name
+	if location == "component" {
+		prefix = strings.ToLower(name)
+	}
+	c := context{category: "parameter", subcategory: location, path: path, method: method, fieldPrefix: prefix}
 	for key, value := range diff {
 		switch key {
 		case "schema":
@@ -729,14 +734,26 @@ func (b *builder) emitModified(c context, baseSegs, targetSegs []string, field s
 	if !targetOK {
 		category = categoryForPointer(basePointer, c.category)
 	}
+	component := componentOf(targetPointer)
+	if component == "" {
+		component = componentOf(basePointer)
+	}
+	path, method := c.path, c.method
+	if component != "" && category != "endpoint" && category != "operation" {
+		path, method = "", ""
+	}
+	fieldLabel := field
+	if c.fieldPrefix != "" && field != "" {
+		fieldLabel = c.fieldPrefix + "." + field
+	}
 	change := model.DiffChange{
 		Category:        category,
 		ChangeType:      "modified",
 		Subcategory:     optional(c.subcategory),
-		Path:            optional(c.path),
-		Method:          optional(c.method),
-		Component:       optional(componentOf(targetPointer)),
-		Field:           optional(field),
+		Path:            optional(path),
+		Method:          optional(method),
+		Component:       optional(component),
+		Field:           optional(fieldLabel),
 		BasePointer:     optionalPointer(basePointer, baseOK),
 		TargetPointer:   optionalPointer(targetPointer, targetOK),
 		DisplayPointer:  displayPointer(targetPointer, targetOK, basePointer, baseOK, targetSegs),
@@ -757,14 +774,23 @@ func (b *builder) emitAdded(c context, baseSegs, targetSegs []string, field stri
 		}
 	}
 	category := categoryForPointer(targetPointer, c.category)
+	component := componentOf(targetPointer)
+	path, method := c.path, c.method
+	if component != "" && category != "endpoint" && category != "operation" {
+		path, method = "", ""
+	}
+	fieldLabel := field
+	if c.fieldPrefix != "" && field != "" {
+		fieldLabel = c.fieldPrefix + "." + field
+	}
 	change := model.DiffChange{
 		Category:        category,
 		ChangeType:      "added",
 		Subcategory:     optional(c.subcategory),
-		Path:            optional(c.path),
-		Method:          optional(c.method),
-		Component:       optional(componentOf(targetPointer)),
-		Field:           optional(field),
+		Path:            optional(path),
+		Method:          optional(method),
+		Component:       optional(component),
+		Field:           optional(fieldLabel),
 		BasePointer:     nil,
 		TargetPointer:   optionalPointer(targetPointer, targetOK),
 		DisplayPointer:  displayPointer(targetPointer, targetOK, nil, false, targetSegs),
@@ -783,14 +809,23 @@ func (b *builder) emitRemoved(c context, baseSegs, targetSegs []string, field st
 		}
 	}
 	category := categoryForPointer(basePointer, c.category)
+	component := componentOf(basePointer)
+	path, method := c.path, c.method
+	if component != "" && category != "endpoint" && category != "operation" {
+		path, method = "", ""
+	}
+	fieldLabel := field
+	if c.fieldPrefix != "" && field != "" {
+		fieldLabel = c.fieldPrefix + "." + field
+	}
 	change := model.DiffChange{
 		Category:        category,
 		ChangeType:      "removed",
 		Subcategory:     optional(c.subcategory),
-		Path:            optional(c.path),
-		Method:          optional(c.method),
-		Component:       optional(componentOf(basePointer)),
-		Field:           optional(field),
+		Path:            optional(path),
+		Method:          optional(method),
+		Component:       optional(component),
+		Field:           optional(fieldLabel),
 		BasePointer:     optionalPointer(basePointer, baseOK),
 		TargetPointer:   nil,
 		DisplayPointer:  displayPointer(nil, false, basePointer, baseOK, baseSegs),
@@ -845,6 +880,10 @@ func searchParameters(doc any, ownerSegs []string, location, name string, depth 
 	for index := range params {
 		candidateSegs := append(appendSegment(ownerSegs, "parameters"), strconv.Itoa(index))
 		candidate, canonical, ok := resolve(doc, candidateSegs, 0)
+		if !ok {
+			continue
+		}
+		candidate, canonical, ok = derefValue(doc, candidate, canonical, 0)
 		if !ok {
 			continue
 		}
@@ -909,6 +948,33 @@ func resolve(root any, segments []string, depth int) (any, []string, bool) {
 		_ = index
 	}
 	return current, pointer, true
+}
+
+func derefValue(doc, value any, pointer []string, depth int) (any, []string, bool) {
+	if depth > 8 {
+		return value, pointer, false
+	}
+	for {
+		valueMap, ok := asMap(value)
+		if !ok {
+			return value, pointer, true
+		}
+		ref, ok := valueMap["$ref"].(string)
+		if !ok || !strings.HasPrefix(ref, "#/") {
+			return value, pointer, true
+		}
+		refSegs := splitPointer(strings.TrimPrefix(ref, "#/"))
+		resolved, resolvedPointer, ok := resolve(doc, refSegs, depth+1)
+		if !ok {
+			return value, pointer, true
+		}
+		value = resolved
+		pointer = resolvedPointer
+		depth++
+		if depth > 8 {
+			return value, pointer, false
+		}
+	}
 }
 
 func canonicalPointer(doc any, segments []string) ([]string, bool) {
