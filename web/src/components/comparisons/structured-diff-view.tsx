@@ -1,11 +1,11 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { memo, useDeferredValue, useMemo, useRef, useState } from "react";
 import {
   ArrowDownLeftIcon,
   ArrowUpRightIcon,
-  BoxesIcon,
+  BoxIcon,
   CircleIcon,
   InfoIcon,
   LayersIcon,
@@ -58,7 +58,7 @@ const categoryIcons: Record<string, LucideIcon> = {
   request: ArrowUpRightIcon,
   response: ArrowDownLeftIcon,
   header: ListIcon,
-  schema: BoxesIcon,
+  schema: BoxIcon,
   security: ShieldIcon,
   server: ServerIcon,
   metadata: InfoIcon,
@@ -189,7 +189,11 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
   );
 }
 
-function ChangeCard({ change }: { change: DiffChangeItem }) {
+const ChangeCard = memo(function ChangeCard({
+  change,
+}: {
+  change: DiffChangeItem;
+}) {
   const sourceHunks = change.source?.hunks ?? [];
 
   return (
@@ -226,7 +230,7 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
       </div>
     </article>
   );
-}
+});
 
 function TypeButton({
   label,
@@ -255,15 +259,30 @@ function TypeButton({
   );
 }
 
+type Filters = {
+  q: string;
+  category: string;
+  changeType: string;
+  method: string;
+};
+
+const PAGE_SIZE = 30;
+
 export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const q = searchParams.get("sc_q") ?? "";
-  const category = searchParams.get("sc_category") ?? "";
-  const changeType = searchParams.get("sc_type") ?? "";
-  const method = searchParams.get("sc_method") ?? "";
+  const [filters, setFilters] = useState<Filters>(() => ({
+    q: searchParams.get("sc_q") ?? "",
+    category: searchParams.get("sc_category") ?? "",
+    changeType: searchParams.get("sc_type") ?? "",
+    method: searchParams.get("sc_method") ?? "",
+  }));
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // Keeps typing responsive while the filtered cards re-render.
+  const deferredQ = useDeferredValue(filters.q);
 
   const categories = useMemo(
     () =>
@@ -281,27 +300,45 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     [changes],
   );
 
+  const searchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+    for (const change of changes) {
+      index.set(change.id, changeSearchText(change));
+    }
+    return index;
+  }, [changes]);
+
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = deferredQ.trim().toLowerCase();
     return changes.filter((change) => {
-      if (category && change.category !== category) {
+      if (filters.category && change.category !== filters.category) {
         return false;
       }
-      if (changeType && change.changeType !== changeType) {
+      if (filters.changeType && change.changeType !== filters.changeType) {
         return false;
       }
-      if (method && change.method !== method) {
+      if (filters.method && change.method !== filters.method) {
         return false;
       }
-      if (needle && !changeSearchText(change).includes(needle)) {
+      if (needle && !(searchIndex.get(change.id) ?? "").includes(needle)) {
         return false;
       }
       return true;
     });
-  }, [category, changeType, changes, method, q]);
+  }, [
+    changes,
+    deferredQ,
+    filters.category,
+    filters.changeType,
+    filters.method,
+    searchIndex,
+  ]);
 
-  const selectedLabel = category
-    ? categoryLabels[category] ?? humanize(category)
+  const visible = filtered.slice(0, limit);
+  const remaining = filtered.length - visible.length;
+
+  const selectedLabel = filters.category
+    ? categoryLabels[filters.category] ?? humanize(filters.category)
     : "All changes";
 
   const changeTypeItems = [
@@ -315,25 +352,33 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     ...methods.map((item) => ({ value: item, label: item })),
   ];
 
-  function update(values: Record<string, string | null>) {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(values)) {
-      if (!value) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-    }
+  function applyFilters(next: Partial<Filters>) {
+    const value = { ...filters, ...next };
+    setFilters(value);
+    setLimit(PAGE_SIZE);
+    syncUrl(value);
+    listRef.current
+      ?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
+      ?.scrollTo({ top: 0 });
+  }
+
+  // Updates the URL without a server round trip, so filters stay shareable.
+  function syncUrl(value: Filters) {
+    const params = new URLSearchParams();
+    if (value.q) params.set("sc_q", value.q);
+    if (value.category) params.set("sc_category", value.category);
+    if (value.changeType) params.set("sc_type", value.changeType);
+    if (value.method) params.set("sc_method", value.method);
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    window.history.replaceState(
+      null,
+      "",
+      query ? `${pathname}?${query}` : pathname,
+    );
   }
 
   function clearFilters() {
-    update({
-      sc_q: null,
-      sc_type: null,
-      sc_method: null,
-    });
+    applyFilters({ q: "", changeType: "", method: "" });
   }
 
   return (
@@ -343,16 +388,16 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
           <TypeButton
             label="All changes"
             icon={LayersIcon}
-            active={!category}
-            onClick={() => update({ sc_category: null })}
+            active={!filters.category}
+            onClick={() => applyFilters({ category: "" })}
           />
           {categories.map((item) => (
             <TypeButton
               key={item}
               label={categoryLabels[item] ?? humanize(item)}
               icon={categoryIcons[item] ?? CircleIcon}
-              active={category === item}
-              onClick={() => update({ sc_category: item })}
+              active={filters.category === item}
+              onClick={() => applyFilters({ category: item })}
             />
           ))}
         </div>
@@ -371,15 +416,15 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Input
-              value={q}
-              onChange={(event) => update({ sc_q: event.target.value || null })}
+              value={filters.q}
+              onChange={(event) => applyFilters({ q: event.target.value })}
               placeholder="Search changes…"
               className="h-8 min-w-[200px] flex-1"
             />
             <Select
-              value={changeType || "all"}
+              value={filters.changeType || "all"}
               onValueChange={(value) =>
-                update({ sc_type: value === "all" ? null : String(value) })
+                applyFilters({ changeType: value === "all" ? "" : String(value) })
               }
               items={changeTypeItems}
             >
@@ -395,9 +440,9 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
               </SelectContent>
             </Select>
             <Select
-              value={method || "all"}
+              value={filters.method || "all"}
               onValueChange={(value) =>
-                update({ sc_method: value === "all" ? null : String(value) })
+                applyFilters({ method: value === "all" ? "" : String(value) })
               }
               items={methodItems}
             >
@@ -424,7 +469,7 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
         </div>
 
         <ScrollArea className="min-h-0 flex-1">
-          <div className="space-y-4 px-4 pt-4 pb-24">
+          <div ref={listRef} className="space-y-4 px-4 pt-4 pb-24">
             {filtered.length === 0 ? (
               <div className="rounded-lg border border-border bg-card px-5 py-16 text-center">
                 <p className="text-sm font-medium">No changes match these filters</p>
@@ -433,7 +478,23 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
                 </p>
               </div>
             ) : (
-              filtered.map((change) => <ChangeCard key={change.id} change={change} />)
+              <>
+                {visible.map((change) => (
+                  <ChangeCard key={change.id} change={change} />
+                ))}
+                {remaining > 0 ? (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 px-4"
+                      onClick={() => setLimit((value) => value + PAGE_SIZE)}
+                    >
+                      Show {Math.min(remaining, PAGE_SIZE)} more
+                    </Button>
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
         </ScrollArea>

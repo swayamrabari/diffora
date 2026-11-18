@@ -2168,7 +2168,7 @@ Rules:
 - Defaults are omitted: `tab=changes`, `type=all`, `docs=0`, empty `q`, no `categories`.
 - Categories are comma-separated and validated against the enum.
 - Invalid values fall back to defaults without crashing.
-- Changing filters uses `router.replace(..., { scroll: false })`.
+- Changing filters updates in-memory state and syncs the query string with `window.history.replaceState`, so filtering never triggers a server render.
 - Reloading restores the view.
 - If the selected change no longer matches the filters, keep it selected but show a small “hidden by filters” notice, or clear it consistently. Pick one and test it.
 - Back/forward navigation works.
