@@ -20,7 +20,8 @@ The app is complete end to end:
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
 - Single-page comparison workspace: collapsible summary, filters, grouped change tree, and a unified before/after diff with `-`/`+` lines and line numbers.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.
-- Full end-to-end test against Supabase: the reference pair stores **68 unique changes**, renders the unified diff, exports all 68, and exposes no internal pointers.
+- Each change includes a full-line source hunk with 3 lines of context above and below, GitHub-style green additions and red removals, and old/new line numbers.
+- Full end-to-end test against Supabase: the reference pair stores **83 unique changes**, all with source hunks, exports all 83, and exposes no internal pointers.
 
 ## Stack
 
@@ -201,7 +202,8 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The comparison page supports export and delete.
-- The workspace has no tabs. It shows a collapsible summary, filters, grouped changes, and a unified diff for the selected change.
+- The workspace has no tabs. It shows a collapsible summary, filters, grouped changes, and a full-line source diff for the selected change.
+- The diff shows complete source lines with old/new line numbers, 3 context lines above and below, green additions, and red removals.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 
 ## Next steps

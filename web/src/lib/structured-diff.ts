@@ -1,3 +1,5 @@
+import type { SourceDiff } from "@/types/comparison";
+
 export type DiffChangeItem = {
   id: string;
   category: string;
@@ -11,6 +13,7 @@ export type DiffChangeItem = {
   newValue: unknown;
   oldValuePresent: boolean;
   newValuePresent: boolean;
+  source?: SourceDiff;
 };
 
 export type StructuredNode = {

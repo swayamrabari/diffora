@@ -2,6 +2,7 @@ package diffchange
 
 import (
 	"encoding/json"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,19 +19,30 @@ type context struct {
 }
 
 type builder struct {
-	base    any
-	target  any
-	changes []model.DiffChange
-	seen    map[string]bool
+	base         any
+	target       any
+	baseLines    []string
+	targetLines  []string
+	baseSource   *sourceIndex
+	targetSource *sourceIndex
+	changes      []model.DiffChange
+	seen         map[string]bool
 }
 
 // Build flattens the raw oasdiff object into unique, typed changes. It follows
-// $ref so operation copies collapse onto their component locations.
-func Build(diff map[string]any, base, target any) []model.DiffChange {
+// $ref so operation copies collapse onto their component locations, and it
+// attaches a full-line source hunk when source text is available.
+func Build(diff map[string]any, base, target any, baseText, targetText string) []model.DiffChange {
+	baseLines := splitSourceLines(baseText)
+	targetLines := splitSourceLines(targetText)
 	b := &builder{
-		base:   base,
-		target: target,
-		seen:   map[string]bool{},
+		base:         base,
+		target:       target,
+		baseLines:    baseLines,
+		targetLines:  targetLines,
+		baseSource:   buildSourceIndex(baseText, baseLines),
+		targetSource: buildSourceIndex(targetText, targetLines),
+		seen:         map[string]bool{},
 	}
 
 	if info, ok := asMap(diff["info"]); ok {
@@ -375,7 +387,21 @@ func (b *builder) walkHeaders(diff map[string]any, baseSegs, targetSegs []string
 		}
 		baseHeader := headerSegs(b.base, baseSegs, name)
 		targetHeader := headerSegs(b.target, targetSegs, name)
-		b.walkSchemaDiff(node, appendSegment(baseHeader, "schema"), appendSegment(targetHeader, "schema"), context{category: "header", subcategory: name, path: path, method: method}, name)
+		b.walkHeaderDiff(node, baseHeader, targetHeader, context{category: "header", subcategory: name, path: path, method: method}, name)
+	}
+}
+
+func (b *builder) walkHeaderDiff(diff map[string]any, baseSegs, targetSegs []string, c context, field string) {
+	for key, raw := range diff {
+		value, ok := asMap(raw)
+		if !ok {
+			continue
+		}
+		if key == "schema" {
+			b.walkSchemaDiff(value, appendSegment(baseSegs, "schema"), appendSegment(targetSegs, "schema"), c, field)
+			continue
+		}
+		b.walkGenericObject(value, appendSegment(baseSegs, mapKey(key)), appendSegment(targetSegs, mapKey(key)), c)
 	}
 }
 
@@ -437,12 +463,14 @@ func (b *builder) walkSchemaDiff(diff map[string]any, baseSegs, targetSegs []str
 			if hasAdded && hasDeleted && len(added) == 1 && len(deleted) == 1 {
 				b.emitModified(c, appendSegment(baseSegs, "type"), appendSegment(targetSegs, "type"), "type", deleted[0], added[0])
 			} else if hasAdded {
-				for index, item := range added {
-					b.emitAdded(c, appendSegment(appendSegment(targetSegs, "type"), strconv.Itoa(index)), appendSegment(appendSegment(targetSegs, "type"), strconv.Itoa(index)), "type", item)
+				for _, item := range added {
+					segs := appendSegment(targetSegs, "type")
+					b.emitAdded(c, segs, segs, "type", item)
 				}
 			} else if hasDeleted {
-				for index, item := range deleted {
-					b.emitRemoved(c, appendSegment(appendSegment(baseSegs, "type"), strconv.Itoa(index)), appendSegment(appendSegment(baseSegs, "type"), strconv.Itoa(index)), "type", item)
+				for _, item := range deleted {
+					segs := appendSegment(baseSegs, "type")
+					b.emitRemoved(c, segs, segs, "type", item)
 				}
 			}
 		case "items":
@@ -546,14 +574,16 @@ func (b *builder) walkExtensions(diff map[string]any, baseSegs, targetSegs []str
 
 func (b *builder) walkStringList(field string, diff map[string]any, baseSegs, targetSegs []string, c context) {
 	if added, ok := asSlice(diff["added"]); ok {
-		for index, item := range added {
-			segs := append(appendSegment(targetSegs, field), strconv.Itoa(index))
+		for fallbackIndex, item := range added {
+			index := itemIndex(b.target, targetSegs, item, fallbackIndex)
+			segs := appendSegment(targetSegs, strconv.Itoa(index))
 			b.emitAdded(c, segs, segs, field, item)
 		}
 	}
 	if deleted, ok := asSlice(diff["deleted"]); ok {
-		for index, item := range deleted {
-			segs := append(appendSegment(baseSegs, field), strconv.Itoa(index))
+		for fallbackIndex, item := range deleted {
+			index := itemIndex(b.base, baseSegs, item, fallbackIndex)
+			segs := appendSegment(baseSegs, strconv.Itoa(index))
 			b.emitRemoved(c, segs, segs, field, item)
 		}
 	}
@@ -564,8 +594,10 @@ func (b *builder) walkUnknownList(field string, values any, baseSegs, targetSegs
 	if !ok {
 		return
 	}
-	for index, item := range items {
-		segs := append(appendSegment(targetSegs, field), strconv.Itoa(index))
+	arraySegs := appendSegment(targetSegs, field)
+	for fallbackIndex, item := range items {
+		index := itemIndex(b.target, arraySegs, item, fallbackIndex)
+		segs := appendSegment(arraySegs, strconv.Itoa(index))
 		b.emitAdded(c, segs, segs, itemField, item)
 	}
 }
@@ -681,7 +713,7 @@ func (b *builder) walkComponents(components map[string]any) {
 			case "parameters":
 				b.walkParameterDiff(node, baseSegs, targetSegs, "", "", "component", name)
 			case "headers":
-				b.walkSchemaDiff(node, appendSegment(baseSegs, "schema"), appendSegment(targetSegs, "schema"), context{category: "header", subcategory: name}, name)
+				b.walkHeaderDiff(node, baseSegs, targetSegs, context{category: "header", subcategory: name}, name)
 			case "requestBodies":
 				b.walkRequestBody(node, baseSegs, targetSegs, "", "")
 			case "responses":
@@ -710,14 +742,18 @@ func (b *builder) walkGenericObject(diff map[string]any, baseSegs, targetSegs []
 		}
 	}
 	if added, ok := asSlice(diff["added"]); ok {
-		for index, item := range added {
-			segs := append(appendSegment(targetSegs, last(baseSegs)), strconv.Itoa(index))
+		arraySegs := appendSegment(targetSegs, last(baseSegs))
+		for fallbackIndex, item := range added {
+			index := itemIndex(b.target, arraySegs, item, fallbackIndex)
+			segs := appendSegment(arraySegs, strconv.Itoa(index))
 			b.emitAdded(c, segs, segs, last(baseSegs), item)
 		}
 	}
 	if deleted, ok := asSlice(diff["deleted"]); ok {
-		for index, item := range deleted {
-			segs := append(appendSegment(baseSegs, last(baseSegs)), strconv.Itoa(index))
+		arraySegs := appendSegment(baseSegs, last(baseSegs))
+		for fallbackIndex, item := range deleted {
+			index := itemIndex(b.base, arraySegs, item, fallbackIndex)
+			segs := appendSegment(arraySegs, strconv.Itoa(index))
 			b.emitRemoved(c, segs, segs, last(baseSegs), item)
 		}
 	}
@@ -850,6 +886,15 @@ func (b *builder) add(change model.DiffChange) {
 		return
 	}
 	b.seen[key] = true
+
+	change.Source = buildSourceDiff(
+		b.baseLines,
+		b.targetLines,
+		b.baseSource,
+		b.targetSource,
+		change.BasePointer,
+		change.TargetPointer,
+	)
 	b.changes = append(b.changes, change)
 }
 
@@ -863,6 +908,19 @@ func (b *builder) parameterSegments(doc any, opSegs []string, location, name str
 		}
 	}
 	return nil
+}
+
+func itemIndex(doc any, arraySegs []string, item any, fallback int) int {
+	list, ok := resolveSlice(doc, arraySegs)
+	if !ok {
+		return fallback
+	}
+	for index, candidate := range list {
+		if reflect.DeepEqual(candidate, item) {
+			return index
+		}
+	}
+	return fallback
 }
 
 func searchParameters(doc any, ownerSegs []string, location, name string, depth int) []string {
@@ -1019,6 +1077,10 @@ func str(value any) string {
 		return typed
 	case json.Number:
 		return typed.String()
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case int:
+		return strconv.Itoa(typed)
 	default:
 		return ""
 	}
@@ -1109,8 +1171,8 @@ func categoryForPointer(pointer []string, fallback string) string {
 		}
 	}
 
-	for _, segment := range pointer {
-		switch segment {
+	for index := len(pointer) - 1; index >= 0; index-- {
+		switch pointer[index] {
 		case "headers":
 			return "header"
 		case "parameters":

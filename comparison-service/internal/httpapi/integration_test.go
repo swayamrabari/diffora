@@ -63,16 +63,22 @@ func TestPinnedEngineEndToEnd(t *testing.T) {
 		t.Fatal("expected structured changes")
 	}
 	foundTag := false
+	foundSource := false
 	for _, change := range diff.Changes {
+		if change.Source != nil && len(change.Source.Hunks) > 0 {
+			foundSource = true
+		}
 		if change.Category == "schema" &&
 			change.Component != nil && *change.Component == "Pet" &&
 			change.Field != nil && *change.Field == "tag" {
 			foundTag = true
-			break
 		}
 	}
 	if !foundTag {
 		t.Fatalf("expected a Pet.tag schema change, got %#v", diff.Changes)
+	}
+	if !foundSource {
+		t.Fatal("expected at least one change with source hunks")
 	}
 
 	deprecationBody := map[string]any{

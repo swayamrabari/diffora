@@ -181,6 +181,9 @@ func TestDiffSuccess(t *testing.T) {
 	if change.ID != "c0" {
 		t.Fatalf("unexpected change id: %q", change.ID)
 	}
+	if change.Source == nil || len(change.Source.Hunks) == 0 {
+		t.Fatalf("expected source hunks: %+v", change)
+	}
 
 	encoded, _ := json.Marshal(payload)
 	if strings.Contains(string(encoded), "secret") || strings.Contains(string(encoded), "basePointer") {

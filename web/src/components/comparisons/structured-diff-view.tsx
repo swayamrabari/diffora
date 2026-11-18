@@ -28,6 +28,7 @@ import {
   type DiffChangeItem,
   type StructuredNode,
 } from "@/lib/structured-diff";
+import type { SourceHunk, SourceLine } from "@/types/comparison";
 
 type StructuredDiffViewProps = {
   changes: DiffChangeItem[];
@@ -124,9 +125,133 @@ function StructuredTreeNode({
   );
 }
 
-function ChangeDetail({ change }: { change: DiffChangeItem }) {
+function sourceTone(kind: SourceLine["kind"]): string {
+  if (kind === "added") {
+    return "bg-emerald-500/10 text-emerald-800 after:text-emerald-600 dark:text-emerald-300 dark:after:text-emerald-400";
+  }
+  if (kind === "removed") {
+    return "bg-red-500/10 text-red-800 after:text-red-600 dark:text-red-300 dark:after:text-red-400";
+  }
+  return "";
+}
+
+function sourceGutterTone(kind: SourceLine["kind"]): string {
+  if (kind === "added") {
+    return "text-emerald-700 dark:text-emerald-400";
+  }
+  if (kind === "removed") {
+    return "text-red-700 dark:text-red-400";
+  }
+  return "text-muted-foreground";
+}
+
+function SourceLineRow({ line }: { line: SourceLine }) {
+  if (line.kind === "gap") {
+    return (
+      <CodeBlockLine className="bg-muted/40 text-center text-xs text-muted-foreground">
+        <span className="block py-0.5">{line.text}</span>
+      </CodeBlockLine>
+    );
+  }
+
+  const gutter = sourceGutterTone(line.kind);
+  return (
+    <CodeBlockLine
+      variant={line.kind === "context" ? "default" : line.kind}
+      className={sourceTone(line.kind)}
+    >
+      <span className="flex min-w-max items-baseline">
+        <span
+          className={`w-11 shrink-0 select-none pr-2 text-right font-mono text-[11px] ${gutter}`}
+        >
+          {line.oldLine ?? ""}
+        </span>
+        <span
+          className={`w-11 shrink-0 select-none pr-3 text-right font-mono text-[11px] ${gutter}`}
+        >
+          {line.newLine ?? ""}
+        </span>
+        <span className="whitespace-pre">{line.text || " "}</span>
+      </span>
+    </CodeBlockLine>
+  );
+}
+
+function SourceDiffView({ hunks }: { hunks: SourceHunk[] }) {
+  const rows: SourceLine[] = [];
+  for (const [index, hunk] of hunks.entries()) {
+    if (index > 0) {
+      rows.push({ kind: "gap", text: "⋯" });
+    }
+    rows.push(...hunk.lines);
+  }
+
+  const changed = rows.filter(
+    (line) => line.kind === "added" || line.kind === "removed",
+  ).length;
+
+  return (
+    <CodeBlock>
+      <CodeBlockHeader>
+        <CodeBlockTitle>Source diff</CodeBlockTitle>
+        <span className="ms-auto text-xs text-muted-foreground">
+          {changed} changed {changed === 1 ? "line" : "lines"} · 3 lines of context
+        </span>
+      </CodeBlockHeader>
+      {rows.length === 0 ? (
+        <p className="border-t px-4 py-6 text-sm text-muted-foreground">
+          No source lines to display for this change.
+        </p>
+      ) : (
+        <CodeBlockContent className="max-h-[60vh] border-t">
+          {rows.map((line, index) => (
+            <SourceLineRow key={`${line.kind}-${index}`} line={line} />
+          ))}
+        </CodeBlockContent>
+      )}
+    </CodeBlock>
+  );
+}
+
+function ValueDiff({ change }: { change: DiffChangeItem }) {
   const lines = useMemo(() => buildChangeDiff(change), [change]);
+
+  return (
+    <CodeBlock>
+      <CodeBlockHeader>
+        <CodeBlockTitle>Value diff</CodeBlockTitle>
+        <span className="ms-auto text-xs text-muted-foreground">
+          {lines.length} {lines.length === 1 ? "line" : "lines"}
+        </span>
+      </CodeBlockHeader>
+      {lines.length === 0 ? (
+        <p className="border-t px-4 py-6 text-sm text-muted-foreground">
+          No values to display for this change.
+        </p>
+      ) : (
+        <CodeBlockContent lineNumbers className="max-h-[60vh] border-t">
+          {lines.map((line, index) => (
+            <CodeBlockLine
+              key={`${line.kind}-${index}`}
+              variant={line.kind === "context" ? "default" : line.kind}
+              className={
+                line.kind === "added" || line.kind === "removed"
+                  ? sourceTone(line.kind)
+                  : undefined
+              }
+            >
+              {line.text}
+            </CodeBlockLine>
+          ))}
+        </CodeBlockContent>
+      )}
+    </CodeBlock>
+  );
+}
+
+function ChangeDetail({ change }: { change: DiffChangeItem }) {
   const tags = changeTags(change);
+  const sourceHunks = change.source?.hunks ?? [];
 
   return (
     <div>
@@ -146,30 +271,11 @@ function ChangeDetail({ change }: { change: DiffChangeItem }) {
       </div>
 
       <div className="p-5">
-        <CodeBlock>
-          <CodeBlockHeader>
-            <CodeBlockTitle>Unified diff</CodeBlockTitle>
-            <span className="ms-auto text-xs text-muted-foreground">
-              {lines.length} {lines.length === 1 ? "line" : "lines"}
-            </span>
-          </CodeBlockHeader>
-          {lines.length === 0 ? (
-            <p className="border-t px-4 py-6 text-sm text-muted-foreground">
-              No values to display for this change.
-            </p>
-          ) : (
-            <CodeBlockContent lineNumbers className="max-h-[60vh] border-t">
-              {lines.map((line, index) => (
-                <CodeBlockLine
-                  key={`${line.kind}-${index}`}
-                  variant={line.kind === "context" ? "default" : line.kind}
-                >
-                  {line.text}
-                </CodeBlockLine>
-              ))}
-            </CodeBlockContent>
-          )}
-        </CodeBlock>
+        {sourceHunks.length > 0 ? (
+          <SourceDiffView hunks={sourceHunks} />
+        ) : (
+          <ValueDiff change={change} />
+        )}
       </div>
     </div>
   );

@@ -108,5 +108,11 @@ Short ADR-style log. Each entry records a decision that affects the build.
 
 - Context: Running `diff`, `changelog`, `summary`, and `breaking`, then storing findings, structured changes, and deprecations separately, duplicated the same information in the service, database, and UI. The tabs made the product harder to use than the underlying comparison.
 - Decision: The Go service runs only `oasdiff diff -f json --allow-external-refs=false`. It returns `engineVersion`, `durationMs`, and one deduplicated `changes` array. The web app stores that array in one JSONB `changes` column plus `totalChanges` on `Comparison`, drops `ComparisonFinding`, `ComparisonDiffChange`, and `ComparisonDeprecation`, and renders a single-page workspace with a collapsible summary, filters, a grouped tree, and one unified diff.
-- Consequences: Deprecated is a tag/filter, not a tab. Breaking, Deprecations, Source diff, raw findings, and technical pointers are removed from the product. This supersedes the multi-output, per-finding table, grouping, and tab decisions above. The reference pair stores 68 unique changes, and pointers remain internal only.
+- Consequences: Deprecated is a tag/filter, not a tab. Breaking, Deprecations, Source diff, raw findings, and technical pointers are removed from the product. This supersedes the multi-output, per-finding table, grouping, and tab decisions above. The reference pair stores 83 unique changes, and pointers remain internal only.
+
+## 2026-11-18 — Full-line source hunks
+
+- Context: The value diff showed only the changed scalar (for example `80 → 120`), but users need to see the complete line and its surrounding spec context.
+- Decision: Map each change's resolved base/target pointer to a position-aware YAML/JSON node, then attach a `source` diff with full lines, old/new line numbers, and 3 context lines above and below. Modified blocks are line-diffed, so unchanged lines stay as context. Pure additions/removals use the full node range.
+- Consequences: Every change for the reference pair now has source hunks. While adding this, array-index and category bugs in required/enum/tag/security/header pointers were fixed, surfacing 15 real changes that were previously collapsed; the reference pair now reports 83 unique changes. Large hunks are capped at 600 lines with a gap marker. Old comparisons without source hunks fall back to the value diff.
 

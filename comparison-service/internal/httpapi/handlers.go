@@ -180,7 +180,7 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	changes := diffchange.Build(diffObject, baseDoc, targetDoc)
+	changes := diffchange.Build(diffObject, baseDoc, targetDoc, request.Base.Content, request.Target.Content)
 	if changes == nil {
 		changes = []model.DiffChange{}
 	}

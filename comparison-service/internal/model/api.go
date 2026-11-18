@@ -32,6 +32,21 @@ type Finding struct {
 	EndColumn   *int   `json:"endColumn,omitempty"`
 }
 
+type SourceLine struct {
+	Kind    string `json:"kind"`
+	OldLine *int   `json:"oldLine,omitempty"`
+	NewLine *int   `json:"newLine,omitempty"`
+	Text    string `json:"text"`
+}
+
+type SourceHunk struct {
+	Lines []SourceLine `json:"lines"`
+}
+
+type SourceDiff struct {
+	Hunks []SourceHunk `json:"hunks"`
+}
+
 type DiffChange struct {
 	ID              string          `json:"id"`
 	Category        string          `json:"category"`
@@ -48,6 +63,7 @@ type DiffChange struct {
 	NewValue        json.RawMessage `json:"newValue,omitempty"`
 	OldValuePresent bool            `json:"oldValuePresent"`
 	NewValuePresent bool            `json:"newValuePresent"`
+	Source          *SourceDiff     `json:"source,omitempty"`
 }
 
 type DiffResponse struct {

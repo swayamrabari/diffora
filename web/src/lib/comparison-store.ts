@@ -16,5 +16,6 @@ export function toStoredChanges(changes: DiffChange[]) {
     ...(change.newValuePresent ? { newValue: change.newValue } : {}),
     oldValuePresent: change.oldValuePresent,
     newValuePresent: change.newValuePresent,
+    ...(change.source ? { source: change.source } : {}),
   }));
 }

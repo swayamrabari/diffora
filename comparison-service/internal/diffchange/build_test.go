@@ -109,7 +109,7 @@ func TestBuildDedupesComponentCopies(t *testing.T) {
 		},
 	}
 
-	changes := Build(diff, base, target)
+	changes := Build(diff, base, target, "", "")
 	if len(changes) != 1 {
 		t.Fatalf("expected 1 deduplicated change, got %d: %#v", len(changes), changes)
 	}
