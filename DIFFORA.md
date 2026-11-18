@@ -68,7 +68,7 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 - Comparisons expose export/delete from their project card, not from the header.
 - A sidebar lists change types (Endpoints, Schemas, etc.) with counts. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
 - Filters: free text, change type, HTTP method, and a deprecated toggle.
-- Each card shows deterministic, user-friendly title and tags. Change type uses green/red/blue tinted badges; category and subtype badges are neutral. Internal pointers are never displayed.
+- Each card shows deterministic, user-friendly title and exactly two tags: change type and category. Change type uses green/red/violet tinted badges; the category badge is neutral. Badges are slightly rounded, not pills. Internal pointers are never displayed.
 - Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card, with uniform vertical padding. Only changed lines are shown.
 - The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
 - The app shell uses full available width on every page, with responsive horizontal padding.

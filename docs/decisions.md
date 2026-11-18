@@ -139,7 +139,7 @@ Short ADR-style log. Each entry records a decision that affects the build.
 ## 2026-11-18 — Full-width shell and semantic badge colors
 
 - Context: The app was capped at a narrow max width, card side-stripes carried the change-type color, category badges were visually flat, and diff line numbers/markers did not share the code color.
-- Decision: Remove the max-width cap from the app shell and top bar. Replace card side-stripes with green/red/blue change-type badges and a separate palette for category badges. Match the code block background to the card, and use the same font, size, and color for line numbers, the `+`/`-` marker, and code.
+- Decision: Remove the max-width cap from the app shell and top bar. Replace card side-stripes with green/red/violet change-type badges and a separate palette for category badges. Match the code block background to the card, and use the same font, size, and color for line numbers, the `+`/`-` marker, and code.
 - Consequences: All pages use the full viewport width with responsive padding. The comparison cards are cleaner, category colors are distinct from change-type colors, and diff rows read as a single visual unit. The card list has extra bottom scroll padding.
 
 ## 2026-11-18 — Fixed header, neutral type tags, tighter code blocks
@@ -155,4 +155,10 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Context: First/last row padding made short code blocks feel uneven, the header had more horizontal padding than needed, and breadcrumb items mixed weights and colors.
 - Decision: Restore uniform code-block vertical padding and remove the per-row first/last padding. Reduce header horizontal padding. Style the conditional breadcrumb path in a single mono size, weight, and color.
 - Consequences: Code blocks have an even vertical rhythm regardless of line count. The header is tighter, and the path reads as one consistent monospace label.
+
+## 2026-11-18 — Two-tag cards and soft-rounded badges
+
+- Context: Cards showed change type, category, parameter location, and sometimes a deprecated tag. The extra tags competed with the change itself, and pill-shaped badges felt too rounded for the rest of the UI.
+- Decision: Show only two tags per card: change type and category. Remove the subcategory and deprecated tags from the card header. Change the shared badge radius from pill to `rounded-md`, including project/version status and summary tags.
+- Consequences: Cards scan faster and keep the change-type color meaningful. Deprecated changes remain filterable and their titles still say “Marked deprecated”; they no longer add a third tag. All badges now share a softer rectangular shape.
 

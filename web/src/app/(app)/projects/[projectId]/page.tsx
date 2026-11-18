@@ -219,7 +219,7 @@ export default async function ProjectPage({ params }: PageProps) {
                           {comparison.baseVersion.label} → {comparison.targetVersion.label}
                         </h3>
                         <span
-                          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClass(comparison.status)}`}
+                          className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusClass(comparison.status)}`}
                         >
                           {comparison.status}
                         </span>
@@ -231,17 +231,17 @@ export default async function ProjectPage({ params }: PageProps) {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-                    <span className="rounded-full bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    <span className="rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
                       Added {summary.added}
                     </span>
-                    <span className="rounded-full bg-red-50 px-2 py-1 font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
+                    <span className="rounded-md bg-red-50 px-2 py-1 font-medium text-red-700 dark:bg-red-950 dark:text-red-300">
                       Removed {summary.removed}
                     </span>
-                    <span className="rounded-full bg-sky-50 px-2 py-1 font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                    <span className="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                       Modified {summary.modified}
                     </span>
                     {summary.deprecated > 0 ? (
-                      <span className="rounded-full bg-violet-50 px-2 py-1 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                      <span className="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                         Deprecated {summary.deprecated}
                       </span>
                     ) : null}

@@ -20,7 +20,7 @@ The app is complete end to end:
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
 - Slim app header shared across the product, and a full-width app layout on every page.
 - Full-height comparison workspace with a type sidebar and full-width change cards.
-- Cards use color-coded change-type badges, neutral category/subtype badges, and matching diff line colors.
+- Cards use exactly two tags: a color-coded change-type badge and a neutral category badge. Badges use slightly rounded corners, not pills.
 - Dashboard shows projects and totals only; recent comparisons were removed.
 - Project comparisons are cards with added/removed/modified/deprecated summaries and a **View changes** action.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.

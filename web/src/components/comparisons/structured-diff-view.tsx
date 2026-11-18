@@ -39,7 +39,7 @@ const changeTypeBadgeClasses: Record<string, string> = {
     "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
   removed: "border-destructive/20 bg-destructive/10 text-destructive",
   modified:
-    "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
+    "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
 };
 
 function changeTypeBadgeClass(changeType: string): string {
@@ -161,8 +161,8 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
   const sourceHunks = change.source?.hunks ?? [];
 
   return (
-    <article className="overflow-hidden rounded-lg border border-border bg-card">
-      <header className="px-4 py-3">
+    <article className="overflow-hidden rounded-lg border-[1.5px] border-border bg-card">
+      <header className="px-4 py-3 pt-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge
             variant="outline"
@@ -176,17 +176,6 @@ function ChangeCard({ change }: { change: DiffChangeItem }) {
           >
             {categoryLabels[change.category] ?? humanize(change.category)}
           </Badge>
-          {change.subcategory ? (
-            <Badge
-              variant="outline"
-              className="border-border bg-muted/40 text-muted-foreground"
-            >
-              {humanize(change.subcategory)}
-            </Badge>
-          ) : null}
-          {isDeprecatedChange(change) ? (
-            <Badge variant="destructive">Deprecated</Badge>
-          ) : null}
         </div>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <h3 className="min-w-0 break-words text-sm font-semibold">
@@ -228,7 +217,7 @@ function TypeButton({
     >
       <span className="min-w-0 truncate">{label}</span>
       <span
-        className={`rounded-full px-2 py-0.5 text-[11px] ${
+        className={`rounded-md px-2 py-0.5 text-[11px] ${
           active
             ? "bg-primary-foreground/15 text-primary-foreground"
             : "bg-muted text-muted-foreground"
