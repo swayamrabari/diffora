@@ -6,12 +6,7 @@ import {
   ComparisonServiceError,
   diffSpecs,
 } from "@/lib/comparison-client";
-import {
-  chunk,
-  deprecationRows,
-  diffChangeRows,
-  findingRows,
-} from "@/lib/comparison-store";
+import { toStoredChanges } from "@/lib/comparison-store";
 import { getDb } from "@/lib/db";
 import { getEnv } from "@/lib/env";
 import { findProjectForUser } from "@/lib/queries";
@@ -41,10 +36,7 @@ function comparisonSummary(
     status: string;
     engineVersion: string;
     durationMs: number;
-    totalChangelog: number;
-    totalBreaking: number;
-    totalDeprecations: number;
-    totalDiffChanges: number;
+    totalChanges: number;
     createdAt: Date;
   },
   base: VersionRow,
@@ -56,10 +48,7 @@ function comparisonSummary(
     status: comparison.status,
     engineVersion: comparison.engineVersion,
     durationMs: comparison.durationMs,
-    totalChangelog: comparison.totalChangelog,
-    totalBreaking: comparison.totalBreaking,
-    totalDeprecations: comparison.totalDeprecations,
-    totalDiffChanges: comparison.totalDiffChanges,
+    totalChanges: comparison.totalChanges,
     createdAt: comparison.createdAt,
     baseVersion: { id: base.id, label: base.label, title: base.title },
     targetVersion: { id: target.id, label: target.label, title: target.title },
@@ -185,10 +174,7 @@ export async function POST(request: Request, context: RouteContext) {
   }
 
   const env = getEnv();
-  if (
-    diff.changelog.length > env.MAX_CHANGES_PER_COMPARISON ||
-    diff.breaking.length > env.MAX_CHANGES_PER_COMPARISON
-  ) {
+  if (diff.changes.length > env.MAX_CHANGES_PER_COMPARISON) {
     const failed = await createFailedComparison(
       project.id,
       base,
@@ -214,27 +200,10 @@ export async function POST(request: Request, context: RouteContext) {
             status: "completed",
             engineVersion: diff.engineVersion,
             durationMs: diff.durationMs,
-            rawDiffText: diff.rawDiffText,
-            summary: diff.summary as Prisma.InputJsonValue,
-            totalChangelog: diff.changelog.length,
-            totalBreaking: diff.breaking.length,
-            totalDeprecations: diff.deprecations.length,
-            totalDiffChanges: diff.changes.length,
+            totalChanges: diff.changes.length,
+            changes: toStoredChanges(diff.changes) as Prisma.InputJsonValue,
           },
         });
-
-        for (const batch of chunk(findingRows(comparison.id, "changelog", diff.changelog), 500)) {
-          await tx.comparisonFinding.createMany({ data: batch });
-        }
-        for (const batch of chunk(findingRows(comparison.id, "breaking", diff.breaking), 500)) {
-          await tx.comparisonFinding.createMany({ data: batch });
-        }
-        for (const batch of chunk(diffChangeRows(comparison.id, diff.changes), 500)) {
-          await tx.comparisonDiffChange.createMany({ data: batch });
-        }
-        for (const batch of chunk(deprecationRows(comparison.id, diff.deprecations), 500)) {
-          await tx.comparisonDeprecation.createMany({ data: batch });
-        }
 
         await tx.project.update({
           where: { id: project.id },

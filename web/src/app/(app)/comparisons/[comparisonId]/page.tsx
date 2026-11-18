@@ -2,9 +2,8 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { ComparisonWorkspace } from "@/components/comparisons/comparison-workspace";
 import { getCurrentUser } from "@/lib/auth";
-import { getDb } from "@/lib/db";
 import { findComparisonForUser } from "@/lib/queries";
-import { toDeprecation, toDiffChange, toFinding } from "@/lib/serializers";
+import type { DiffChangeItem } from "@/lib/structured-diff";
 
 export const dynamic = "force-dynamic";
 
@@ -22,26 +21,8 @@ export default async function ComparisonPage({ params }: PageProps) {
     notFound();
   }
 
-  const db = getDb();
-  const [findings, diffChanges, deprecations] = await Promise.all([
-    db.comparisonFinding.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: [{ kind: "asc" }, { position: "asc" }],
-      take: 10_000,
-    }),
-    db.comparisonDiffChange.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: { position: "asc" },
-      take: 10_000,
-    }),
-    db.comparisonDeprecation.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: { position: "asc" },
-    }),
-  ]);
-
   return (
-    <Suspense fallback={<div className="text-sm text-zinc-500">Loading comparison…</div>}>
+    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading comparison…</div>}>
       <ComparisonWorkspace
         comparison={{
           id: comparison.id,
@@ -49,11 +30,7 @@ export default async function ComparisonPage({ params }: PageProps) {
           status: comparison.status,
           engineVersion: comparison.engineVersion,
           durationMs: comparison.durationMs,
-          totalChangelog: comparison.totalChangelog,
-          totalBreaking: comparison.totalBreaking,
-          totalDeprecations: comparison.totalDeprecations,
-          totalDiffChanges: comparison.totalDiffChanges,
-          summary: comparison.summary,
+          totalChanges: comparison.totalChanges,
           errorMessage: comparison.errorMessage,
           createdAt: comparison.createdAt.toISOString(),
           project: comparison.project,
@@ -68,9 +45,7 @@ export default async function ComparisonPage({ params }: PageProps) {
             title: comparison.targetVersion.title,
           },
         }}
-        findings={findings.map(toFinding)}
-        diffChanges={diffChanges.map(toDiffChange)}
-        deprecations={deprecations.map(toDeprecation)}
+        changes={comparison.changes as DiffChangeItem[]}
       />
     </Suspense>
   );

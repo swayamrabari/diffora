@@ -1,14 +1,8 @@
 import { NextResponse } from "next/server";
 import { errorResponse } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
-import { getDb } from "@/lib/db";
 import { findComparisonForUser } from "@/lib/queries";
-import {
-  toComparisonDetail,
-  toDeprecation,
-  toDiffChange,
-  toFinding,
-} from "@/lib/serializers";
+import { toComparisonDetail } from "@/lib/serializers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,39 +21,12 @@ export async function GET(_request: Request, context: RouteContext) {
     return errorResponse(404, "NOT_FOUND", "Comparison not found.");
   }
 
-  const db = getDb();
-  const [findings, diffChanges, deprecations] = await Promise.all([
-    db.comparisonFinding.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: [{ kind: "asc" }, { position: "asc" }],
-    }),
-    db.comparisonDiffChange.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: { position: "asc" },
-    }),
-    db.comparisonDeprecation.findMany({
-      where: { comparisonId: comparison.id },
-      orderBy: { position: "asc" },
-    }),
-  ]);
-
-  let rawDiff: unknown = null;
-  if (comparison.rawDiffText) {
-    try {
-      rawDiff = JSON.parse(comparison.rawDiffText);
-    } catch {
-      rawDiff = null;
-    }
-  }
-
+  const { changes, ...comparisonMeta } = toComparisonDetail(comparison);
   const body = {
     exportVersion: 1,
     exportedAt: new Date().toISOString(),
-    comparison: toComparisonDetail(comparison),
-    findings: findings.map(toFinding),
-    diffChanges: diffChanges.map(toDiffChange),
-    deprecations: deprecations.map(toDeprecation),
-    rawDiff,
+    comparison: comparisonMeta,
+    changes,
   };
 
   return NextResponse.json(body, {

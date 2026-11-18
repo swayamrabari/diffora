@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"diffora/comparison-service/internal/deprecations"
 	"diffora/comparison-service/internal/diffchange"
 	"diffora/comparison-service/internal/model"
 	"diffora/comparison-service/internal/oasdiff"
@@ -143,70 +141,42 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 	}
 
 	start := time.Now()
-	results, err := s.runCommands(r.Context(), dir, baseFile, targetFile)
+	result, err := s.engine.Run(r.Context(), dir, s.cfg.DiffTimeout,
+		"diff", baseFile, targetFile, "-f", "json", "--allow-external-refs=false")
 	if err != nil {
-		s.logger.Error("engine batch", "error", err)
+		s.logger.Error("diff run", "error", err)
 		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The comparison engine failed.")
 		return
 	}
 	durationMs := time.Since(start).Milliseconds()
 
-	for _, name := range []string{"diff", "changelog", "summary", "breaking"} {
-		result := results[name]
-		if result.TimedOut {
-			writeError(w, http.StatusGatewayTimeout, "TIMEOUT", "The comparison engine timed out.")
-			return
-		}
-		if result.StdoutTruncated {
-			writeError(w, http.StatusUnprocessableEntity, "OUTPUT_TOO_LARGE", "The comparison output was too large.")
-			return
-		}
-		switch result.ExitCode {
-		case 0:
-		case 123:
-			writeError(w, http.StatusUnprocessableEntity,
-				"EXTERNAL_REF_NOT_SUPPORTED", "External references are not supported.")
-			return
-		case 1, 102:
-			writeError(w, http.StatusUnprocessableEntity, "INVALID_SPEC",
-				"One of the specs could not be compared.")
-			return
-		default:
-			writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The comparison engine failed.")
-			return
-		}
+	if result.TimedOut {
+		writeError(w, http.StatusGatewayTimeout, "TIMEOUT", "The comparison engine timed out.")
+		return
 	}
-
-	diffResult := results["diff"]
+	if result.StdoutTruncated {
+		writeError(w, http.StatusUnprocessableEntity, "OUTPUT_TOO_LARGE", "The comparison output was too large.")
+		return
+	}
+	switch result.ExitCode {
+	case 0:
+	case 123:
+		writeError(w, http.StatusUnprocessableEntity,
+			"EXTERNAL_REF_NOT_SUPPORTED", "External references are not supported.")
+		return
+	case 1, 102:
+		writeError(w, http.StatusUnprocessableEntity, "INVALID_SPEC",
+			"One of the specs could not be compared.")
+		return
+	default:
+		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The comparison engine failed.")
+		return
+	}
 
 	var diffObject map[string]any
-	if err := json.Unmarshal(diffResult.Stdout, &diffObject); err != nil || diffObject == nil {
+	if err := json.Unmarshal(result.Stdout, &diffObject); err != nil || diffObject == nil {
 		s.logger.Error("parse diff", "error", err)
 		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The engine returned an invalid diff.")
-		return
-	}
-	changelog, err := oasdiff.Sanitize(results["changelog"].Stdout)
-	if err != nil {
-		s.logger.Error("parse changelog", "error", err)
-		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The engine returned an invalid changelog.")
-		return
-	}
-	breaking, err := oasdiff.Sanitize(results["breaking"].Stdout)
-	if err != nil {
-		s.logger.Error("parse breaking", "error", err)
-		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The engine returned invalid breaking changes.")
-		return
-	}
-	if len(changelog) > s.cfg.MaxChanges || len(breaking) > s.cfg.MaxChanges {
-		writeError(w, http.StatusUnprocessableEntity, "TOO_MANY_CHANGES",
-			"The comparison contains too many changes.")
-		return
-	}
-
-	var summaryObject map[string]any
-	if err := json.Unmarshal(results["summary"].Stdout, &summaryObject); err != nil || summaryObject == nil {
-		s.logger.Error("parse summary", "error", err)
-		writeError(w, http.StatusInternalServerError, "ENGINE_FAILED", "The engine returned an invalid summary.")
 		return
 	}
 
@@ -216,65 +186,16 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(changes) > s.cfg.MaxChanges {
 		writeError(w, http.StatusUnprocessableEntity, "TOO_MANY_CHANGES",
-			"The comparison contains too many structured changes.")
+			"The comparison contains too many changes.")
 		return
 	}
 
 	response := model.DiffResponse{
 		EngineVersion: s.engineVersion,
 		DurationMs:    durationMs,
-		RawDiffText:   string(diffResult.Stdout),
-		Changelog:     changelog,
-		Summary:       json.RawMessage(results["summary"].Stdout),
-		Breaking:      breaking,
-		Deprecations:  deprecations.Extract(diffObject),
 		Changes:       changes,
 	}
 	writeJSON(w, http.StatusOK, response)
-}
-
-func (s *Server) runCommands(ctx context.Context, dir, baseFile, targetFile string) (map[string]oasdiff.Result, error) {
-	type command struct {
-		name string
-		args []string
-	}
-	commands := []command{
-		{"diff", []string{"diff", baseFile, targetFile, "-f", "json", "--allow-external-refs=false"}},
-		{"changelog", []string{"changelog", baseFile, targetFile, "-f", "json", "--allow-external-refs=false"}},
-		{"summary", []string{"summary", baseFile, targetFile, "-f", "json", "--allow-external-refs=false"}},
-		{"breaking", []string{"breaking", baseFile, targetFile, "-f", "json", "--allow-external-refs=false"}},
-	}
-
-	runCtx, cancel := context.WithTimeout(ctx, s.cfg.DiffTimeout)
-	defer cancel()
-
-	type outcome struct {
-		name   string
-		result oasdiff.Result
-		err    error
-	}
-	outcomes := make(chan outcome, len(commands))
-	for _, item := range commands {
-		go func(item command) {
-			result, err := s.engine.Run(runCtx, dir, s.cfg.DiffTimeout, item.args...)
-			outcomes <- outcome{name: item.name, result: result, err: err}
-		}(item)
-	}
-
-	results := make(map[string]oasdiff.Result, len(commands))
-	var firstErr error
-	for range commands {
-		item := <-outcomes
-		if item.err != nil && firstErr == nil {
-			firstErr = item.err
-			cancel()
-		}
-		results[item.name] = item.result
-	}
-	if firstErr != nil {
-		return nil, firstErr
-	}
-	return results, nil
 }
 
 func validFormat(value string) bool {

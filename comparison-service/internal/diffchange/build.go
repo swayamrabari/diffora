@@ -68,6 +68,10 @@ func Build(diff map[string]any, base, target any) []model.DiffChange {
 						changeRank(left.ChangeType) < changeRank(right.ChangeType))))
 	})
 
+	for index := range b.changes {
+		b.changes[index].ID = "c" + strconv.Itoa(index)
+	}
+
 	return b.changes
 }
 

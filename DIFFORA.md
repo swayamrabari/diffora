@@ -1,15 +1,87 @@
 # Diffora — API Specification Comparison Tool: Build Specification (v2)
 
 > **Status:** revised plan, 2026-11-17. Supersedes v1.
+> **Current implementation:** v4, 2026-11-18. See the v4 block below.
 > **Source of truth:** this file. If another document, comment, or scaffold disagrees, this file wins until it is explicitly updated.
 > **Product scope:** demo-grade, end-to-end, single-user-per-account, locally run with Docker Compose.
 > **Core rule:** Diffora reports *what changed*. It never judges whether a change is safe, breaking, severe, or compatible.
 
 ---
 
-## v3 implementation update (Phase 1)
+## v4 implementation update (current)
 
-The build has moved to a simpler engine-driven design. This block supersedes the v2 normalizer contract in sections 5.1 and 11–14 wherever they conflict.
+This is the current engine, storage, and workspace contract. It supersedes every earlier section of this document wherever they conflict.
+
+**Engine calls per comparison:**
+
+```text
+oasdiff diff base.<yaml|json> target.<yaml|json> -f json --allow-external-refs=false
+```
+
+`/validate` still runs:
+
+```text
+oasdiff validate <file> -f json --allow-external-refs=false
+```
+
+There is no `changelog`, `summary`, or `breaking` call. One comparison is one `diff` command.
+
+**Go `/diff` response:**
+
+```json
+{
+  "engineVersion": "1.38.0",
+  "durationMs": 412,
+  "changes": [
+    {
+      "id": "c0",
+      "category": "schema",
+      "changeType": "added",
+      "subcategory": null,
+      "path": null,
+      "method": null,
+      "component": "NewPet",
+      "field": "tag",
+      "newValue": { "maxLength": 40, "type": "string" },
+      "oldValuePresent": false,
+      "newValuePresent": true
+    }
+  ]
+}
+```
+
+- The service follows `$ref` to canonical component locations and deduplicates by change type plus base/target pointer.
+- Operation copies collapse onto one component change. The reference pair produces **68 unique changes**.
+- JSON pointers are internal. They are used for deduplication but are omitted from the response and the database.
+- There is no changelog, summary, breaking, deprecations, or raw diff text in the contract.
+
+**Storage:**
+
+- `Comparison` stores `engineVersion`, `durationMs`, `status`, `totalChanges`, `changes` (`Json`/JSONB), `errorMessage`, and `createdAt`.
+- `changes` is one JSONB array. `ComparisonFinding`, `ComparisonDiffChange`, and `ComparisonDeprecation` do not exist.
+- Failed comparisons store an empty `changes` array and the sanitized error code.
+
+**Workspace:**
+
+- One page, no tabs.
+- A collapsible summary shows change counts by change type and category.
+- Filters: free text, API type, change type, HTTP method, grouping by type/endpoint, and a deprecated toggle.
+- Each change shows deterministic, user-friendly title and tags. Internal pointers are never displayed.
+- The detail view is a single unified diff built from old/new values, with `-`/`+` lines and line numbers.
+- “Deprecated” is a tag and filter when `field` is `deprecated` and the new value is `true`.
+- There is no Breaking view, Deprecations tab, Source diff tab, or raw JSON copy action.
+
+**Unchanged:**
+
+Auth, ownership checks, same-format comparisons, upload validation, the shared secret, engine safety, export, and delete still follow the sections below.
+
+---
+
+## v3 implementation update (historical, superseded by v4)
+
+This block records the earlier v3 design. It is preserved for history; the v4 block above is authoritative.
+
+The build had moved to a simpler engine-driven design. This block superseded the v2 normalizer contract in sections 5.1 and 11–14 wherever they conflicted.
 
 **Engine calls per comparison:**
 
@@ -107,19 +179,19 @@ The remaining sections (auth, upload validation, engine safety, Docker, security
 
 ## How to use this document
 
-1. Read section 0 first. It lists the v1 problems that v2 fixes. Do not reintroduce them.
-2. Phases 0 and 1 are complete. The next implementation step is Phase 2 (database, auth, app shell).
-3. Sections 11–14 are superseded by the v3 block above. Do not rebuild the normalizer.
-4. When a real engine output differs, record it in `docs/notes.md` and update the v3 block.
-5. Never drop engine findings. Store every changelog/breaking item or fail the comparison explicitly.
+1. The **v4 implementation update** at the top is the current contract. It supersedes all earlier engine, storage, and workspace sections.
+2. The v2 sections below record the original design and review. Use them for auth, upload validation, engine safety, Docker, and security context.
+3. Do not rebuild the normalizer, changelog explorer, Breaking tab, Deprecations tab, or Source diff tab.
+4. When a real engine output differs, record it in `docs/notes.md` and update the v4 block.
+5. Never drop a unique change silently. The service deduplicates, then fails explicitly if the configured cap is exceeded.
 
 **Implementation rules:**
 
-- Use the exact file names, routes, field names, and rules in this document, except where the v3 block supersedes them.
-- Run oasdiff only through the four commands in the v3 block.
-- Severity/level labels are allowed in v3. Do not add compatibility or safety judgments beyond what oasdiff returns.
+- Use the exact file names, routes, field names, and rules in this document, except where the v4 block supersedes them.
+- Run oasdiff only through `validate` and `diff`.
+- Do not add compatibility or safety judgments.
 - Do not add AI features, background jobs, queues, sharing, public links, or anything outside section 2.
-- Keep the four-output contract: `rawDiffText`, `changelog`, `summary`, `breaking`, plus `deprecations`.
+- Keep the one-output contract: `engineVersion`, `durationMs`, and `changes`.
 - Both compared versions must use the same format; return `FORMAT_MISMATCH` otherwise.
 - Keep page reads on the server and secrets out of the browser.
 
@@ -768,7 +840,7 @@ Prisma with Supabase PostgreSQL. Migrations use `DIRECT_URL`; runtime queries us
 
 ### 8.1 `web/prisma/schema.prisma`
 
-> **v3 supersedes this schema.** Do not create `DetectedChange` or the normalizer tables. Use the `Comparison` fields and `ComparisonFinding` rows described in the v3 block at the top of this document. The schema below is retained only as historical reference.
+> **v4 supersedes this schema.** Do not create `DetectedChange`, `ComparisonFinding`, or any other normalizer/finding tables. Use the current `web/prisma/schema.prisma` with one `changes` JSONB column. The schema below is retained only as historical reference.
 
 ```prisma
 generator client {
@@ -1215,7 +1287,7 @@ Reading a comparison (`GET` routes) only reads PostgreSQL. It must never import 
 
 ## 11. Comparison service (Go)
 
-> **v3 note:** this section and section 12 describe the abandoned normalizer. The implemented service is the thin proxy in the v3 block. Use the v3 response contract below; do not implement the normalizer.
+> **v4 note:** this section and section 12 describe the original design. The implemented service is the v4 single-command service at the top of this document. Use the v4 response contract; do not implement the normalizer.
 
 A stateless HTTP service. It never touches the database. Only the web application calls it.
 
@@ -1317,7 +1389,7 @@ Request:
 
 1. Validate both formats. Missing content/format → 400 `BAD_REQUEST`. Mixed YAML/JSON → 400 `FORMAT_MISMATCH`.
 2. Create a temp dir and write `base.<ext>` and `target.<ext>` with the uploaded content as-is (BOM stripped).
-3. Run the four commands from the v3 block with the diff timeout.
+3. Run the single `diff` command from the v4 block with the diff timeout.
 4. Timeout → 504 `TIMEOUT`.
 5. Non-zero exit:
    - Exit 123 → 422 `EXTERNAL_REF_NOT_SUPPORTED`.
@@ -1325,31 +1397,19 @@ Request:
    - Otherwise → 500 `ENGINE_FAILED`.
    - Include at most 500 characters of sanitized stderr.
 6. Parse stdout as a JSON object. Empty object means no changes. An empty array is invalid → 500 `ENGINE_FAILED` (the engine should return an object).
-7. Collect `changelog`, `summary`, and `breaking` from the other three commands. Enforce `MAX_CHANGES` on changelog/breaking; abort above the limit with 422 `TOO_MANY_CHANGES`.
+7. Build the deduplicated `changes` array. Enforce `MAX_CHANGES`; abort above the limit with 422 `TOO_MANY_CHANGES`.
 8. Remove the temp directory.
-9. Return the exact diff stdout plus the other engine outputs. `durationMs` measures the engine batch, not the HTTP layer:
+9. Return `engineVersion`, `durationMs`, and `changes`. `durationMs` measures the engine call, not the HTTP layer:
 
 ```json
 {
   "engineVersion": "x.y.z",
   "durationMs": 412,
-  "rawDiffText": "{\"info\":...}",
-  "changelog": [],
-  "summary": { "diff": true, "details": {} },
-  "breaking": [],
-  "deprecations": []
+  "changes": []
 }
 ```
 
-The response does **not** include a parsed `rawDiff` object. This avoids sending the engine output twice. The web app:
-
-- relies on the engine stdout cap (`MAX_ENGINE_STDOUT_BYTES`),
-- parses it with `JSON.parse`,
-- verifies the parsed value is a plain object,
-- stores the exact text in `Comparison.rawDiffText`,
-- parses it again only for export.
-
-If `rawDiffText` does not parse to an object, the web app rejects the response with 502 `BAD_COMPARISON_RESPONSE` and records a failed comparison.
+The web app validates the response, stores `changes` in one JSONB column, and never receives or stores JSON pointers.
 
 ### 11.8 Errors
 

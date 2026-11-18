@@ -59,14 +59,20 @@ func TestPinnedEngineEndToEnd(t *testing.T) {
 	if diff.EngineVersion == "" {
 		t.Fatal("engine version is empty")
 	}
-	if len(diff.Changelog) == 0 {
-		t.Fatal("expected changelog entries")
+	if len(diff.Changes) == 0 {
+		t.Fatal("expected structured changes")
 	}
-	if len(diff.Summary) == 0 {
-		t.Fatal("expected a summary")
+	foundTag := false
+	for _, change := range diff.Changes {
+		if change.Category == "schema" &&
+			change.Component != nil && *change.Component == "Pet" &&
+			change.Field != nil && *change.Field == "tag" {
+			foundTag = true
+			break
+		}
 	}
-	if diff.RawDiffText == "" {
-		t.Fatal("expected raw diff text")
+	if !foundTag {
+		t.Fatalf("expected a Pet.tag schema change, got %#v", diff.Changes)
 	}
 
 	deprecationBody := map[string]any{
@@ -84,14 +90,17 @@ func TestPinnedEngineEndToEnd(t *testing.T) {
 	if err := json.NewDecoder(deprecationResponse.Body).Decode(&deprecationDiff); err != nil {
 		t.Fatalf("decode deprecation diff: %v", err)
 	}
-	if len(deprecationDiff.Deprecations) != 1 {
-		t.Fatalf("expected 1 deprecation, got %#v", deprecationDiff.Deprecations)
+	foundDeprecated := false
+	for _, change := range deprecationDiff.Changes {
+		if change.Field != nil && *change.Field == "deprecated" &&
+			change.Method != nil && *change.Method == "GET" &&
+			change.Path != nil && *change.Path == "/pets" {
+			foundDeprecated = true
+			break
+		}
 	}
-	if deprecationDiff.Deprecations[0].Pointer != "/paths/~1pets/get/deprecated" {
-		t.Fatalf("unexpected deprecation pointer: %#v", deprecationDiff.Deprecations[0])
-	}
-	if deprecationDiff.Deprecations[0].Path != "/pets" || deprecationDiff.Deprecations[0].Method != "GET" {
-		t.Fatalf("unexpected deprecation context: %#v", deprecationDiff.Deprecations[0])
+	if !foundDeprecated {
+		t.Fatalf("expected a deprecated change for GET /pets, got %#v", deprecationDiff.Changes)
 	}
 
 	externalBody := map[string]any{

@@ -6,72 +6,21 @@ The full build specification is in [`DIFFORA.md`](./DIFFORA.md). Engine findings
 
 ## Status
 
-Phase 0 is complete:
+The app is complete end to end:
 
-- Root git repository and `.gitignore` / `.dockerignore`.
-- `comparison-service/` (renamed from the misspelled scaffold folder) with a Go module.
-- Next.js app moved to `web/src/app` with the v2 config.
-- oasdiff pinned to **1.38.0** with verified checksums.
-- 31 fixture pairs generated and validated; raw expected diffs saved.
-- Foundation docs and env examples created.
-
-Phase 1 is complete:
-
-- Go HTTP service with `/health`, `/validate`, and `/diff`.
-- `/diff` runs `diff`, `changelog`, `summary`, and `breaking` against the pinned engine.
+- Go HTTP service with `/health`, `/validate`, and `/diff`, pinned to oasdiff **1.38.0** with verified checksums.
+- `/diff` runs exactly one `oasdiff diff` command and returns one deduplicated `changes` array.
 - Uploaded YAML/JSON is passed to oasdiff as-is; there is no YAML converter or metadata layer.
 - Both compared versions must use the same format; mixing YAML and JSON returns `400 FORMAT_MISMATCH`.
-- Deprecations are extracted from the diff.
 - Shared-secret auth, body limits, timeouts, output caps, panic recovery, and graceful shutdown.
-- Unit tests, HTTP contract tests, and a pinned-engine integration test.
-- Pinned Dockerfile with checksum verification and non-root runtime.
-- Docker image build was not executed in this environment because the Docker daemon is not running.
-
-Phase 2 is complete:
-
-- Prisma 7 schema and initial migration for `User`, `Project`, `ApiVersion`, `Comparison`, `ComparisonFinding`, and `ComparisonDeprecation`.
-- Prisma 7 PostgreSQL adapter and lazy DB client.
-- Environment validation.
-- Register/login/logout/me API routes with bcrypt and JWT cookies.
-- Next 16 `proxy.ts` route protection.
-- Login/register pages, protected app layout, top bar, dashboard shell, error/not-found pages.
-- Build and auth-shell smoke tests pass without a database.
-- The migration has not been applied because Supabase credentials have not been added yet.
-
-Phase 3 is complete:
-
-- Project CRUD API and ownership checks.
-- Dashboard project list with create, edit, and delete.
-- Project page with version and comparison tables.
-- YAML/JSON version upload with size, extension, UTF-8, OpenAPI version, label, checksum, and engine validation.
-- Raw version viewer and protected raw API.
-- Version page with metadata, raw spec, and related comparisons.
-
-Phase 4 is complete:
-
-- `POST /api/projects/:projectId/comparisons` with ownership, same-version, cross-project, and same-format checks.
-- Calls the Go `/diff` endpoint and validates its response.
-- Stores `Comparison`, `ComparisonFinding` rows for changelog and breaking, `ComparisonDeprecation` rows, `summary`, and `rawDiffText` in one transaction.
-- Failed comparisons are stored and returned with `details.comparisonId`.
-- Read APIs: comparison detail, filtered/paginated findings, deprecations, JSON export, and delete.
-- Compare dialog on the project page with version selection, format mismatch warning, and failed-comparison navigation.
-- Minimal comparison page with counts, summary, first changelog page, deprecations, export, and delete.
-- Full end-to-end test against Supabase: **109 changelog, 31 breaking, 1 deprecation**, filters and export verified.
-
-Phase 5 workspace is complete except the Source diff tab:
-
-- The Go service now returns a deduplicated `changes` array built from the raw diff.
-- `ComparisonDiffChange` rows store category, change type, parameter location/response code/header, path, method, component, field, pointers, old/new values, and presence flags.
-- Changes tab is type-first: Endpoints, Operations, Parameters, Requests, Responses, Headers, Schemas, Security, Servers, Metadata, Webhooks.
-- Group by type or endpoint; filter by type, change type, method, and free text.
-- Before/After panels show `-` and `+` values with copy buttons.
-- Duplicate operation copies collapse onto component pointers; the test pair stores **73 unique structured changes** across 109 changelog findings.
-- Breaking tab keeps source-location grouping (31 findings → 14 groups).
-- Summary tab shows structured counts, raw findings, levels, sections, and by-type bars.
-- Deprecations tab uses readable labels and old/new values.
-- Existing comparisons created before this migration show a “re-run” notice because they have no structured rows.
-
-Remaining: Source diff tab, final E2E, security hardening, and packaging.
+- Prisma 7 + Supabase PostgreSQL with `User`, `Project`, `ApiVersion`, and `Comparison`.
+- A comparison stores `totalChanges` and one JSONB `changes` array. There are no child finding tables.
+- Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
+- Project CRUD, version upload with engine validation, raw version viewer, compare dialog.
+- Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
+- Single-page comparison workspace: collapsible summary, filters, grouped change tree, and a unified before/after diff with `-`/`+` lines and line numbers.
+- Deprecations are a tag and filter inside the changes list, not a separate tab.
+- Full end-to-end test against Supabase: the reference pair stores **68 unique changes**, renders the unified diff, exports all 68, and exposes no internal pointers.
 
 ## Stack
 
@@ -87,18 +36,17 @@ Remaining: Source diff tab, final E2E, security hardening, and packaging.
 Diffora/
 ├── DIFFORA.md
 ├── README.md
-├── docker-compose.yml              # added in Phase 6
 ├── docs/
 │   ├── notes.md
 │   ├── decisions.md
 │   └── day1/                       # seed specs, scratch outputs, fixture generator
-├── comparison-service/
+├── comparison-service/             # Go service, Dockerfile, fixtures, tests
 │   ├── go.mod
 │   ├── testdata/pairs/             # 31 fixture pairs
-│   └── ...                         # Go service added in Phase 1
+│   └── ...
 └── web/
     ├── src/app/                    # Next.js App Router
-    ├── prisma/                     # added in Phase 2
+    ├── prisma/                     # schema and migrations
     ├── .env.example
     └── next.config.ts
 ```
@@ -249,18 +197,17 @@ go test ./...
 With at least two versions uploaded, use **Compare** on the project page.
 
 - Both versions must use the same format (YAML/YAML or JSON/JSON).
-- The comparison calls the Go `/diff` endpoint.
+- The comparison calls the Go `/diff` endpoint and stores one JSONB `changes` array.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The comparison page supports export and delete.
-- Changes tab uses the structured, deduplicated diff with before/after values.
-- Breaking and Deprecations tabs use the stored changelog/deprecation rows.
-- Source diff is the remaining Phase 5 item.
+- The workspace has no tabs. It shows a collapsible summary, filters, grouped changes, and a unified diff for the selected change.
+- Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 
 ## Next steps
 
-1. **Phase 5 remainder:** Source diff tab and E2E coverage.
-2. **Phase 6:** Security hardening, Docker Compose, README completion.
+1. Security hardening and packaging review.
+2. Docker Compose and deployment documentation.
 
 ## Security notes
 

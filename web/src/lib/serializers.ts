@@ -19,10 +19,7 @@ export function toVersionSummary(version: ApiVersion) {
 type ComparisonWithVersions = {
   id: string;
   status: string;
-  totalChangelog: number;
-  totalBreaking: number;
-  totalDeprecations: number;
-  totalDiffChanges: number;
+  totalChanges: number;
   createdAt: Date;
   baseVersion: { id: string; label: string };
   targetVersion: { id: string; label: string };
@@ -32,10 +29,7 @@ export function toComparisonSummary(comparison: ComparisonWithVersions) {
   return {
     id: comparison.id,
     status: comparison.status,
-    totalChangelog: comparison.totalChangelog,
-    totalBreaking: comparison.totalBreaking,
-    totalDeprecations: comparison.totalDeprecations,
-    totalDiffChanges: comparison.totalDiffChanges,
+    totalChanges: comparison.totalChanges,
     createdAt: comparison.createdAt,
     baseVersion: comparison.baseVersion,
     targetVersion: comparison.targetVersion,
@@ -48,11 +42,8 @@ type ComparisonDetail = {
   status: string;
   engineVersion: string;
   durationMs: number;
-  totalChangelog: number;
-  totalBreaking: number;
-  totalDeprecations: number;
-  totalDiffChanges: number;
-  summary: unknown;
+  totalChanges: number;
+  changes: unknown;
   errorMessage: string | null;
   createdAt: Date;
   project: { id: string; name: string };
@@ -67,119 +58,12 @@ export function toComparisonDetail(comparison: ComparisonDetail) {
     status: comparison.status,
     engineVersion: comparison.engineVersion,
     durationMs: comparison.durationMs,
-    totalChangelog: comparison.totalChangelog,
-    totalBreaking: comparison.totalBreaking,
-    totalDeprecations: comparison.totalDeprecations,
-    totalDiffChanges: comparison.totalDiffChanges,
-    summary: comparison.summary,
+    totalChanges: comparison.totalChanges,
+    changes: comparison.changes,
     errorMessage: comparison.errorMessage,
     createdAt: comparison.createdAt,
     project: comparison.project,
     baseVersion: comparison.baseVersion,
     targetVersion: comparison.targetVersion,
-  };
-}
-
-type FindingRow = {
-  id: string;
-  kind: string;
-  position: number;
-  ruleId: string;
-  level: number;
-  levelName: string;
-  text: string;
-  operation: string | null;
-  operationId: string | null;
-  path: string | null;
-  section: string | null;
-  line: number | null;
-  column: number | null;
-  endLine: number | null;
-  endColumn: number | null;
-};
-
-export function toFinding(row: FindingRow) {
-  return {
-    id: row.id,
-    kind: row.kind,
-    position: row.position,
-    ruleId: row.ruleId,
-    level: row.level,
-    levelName: row.levelName,
-    text: row.text,
-    operation: row.operation,
-    operationId: row.operationId,
-    path: row.path,
-    section: row.section,
-    line: row.line,
-    column: row.column,
-    endLine: row.endLine,
-    endColumn: row.endColumn,
-  };
-}
-
-type DeprecationRow = {
-  id: string;
-  position: number;
-  pointer: string;
-  path: string | null;
-  method: string | null;
-  oldValue: unknown;
-  newValue: unknown;
-  oldValuePresent: boolean;
-  newValuePresent: boolean;
-};
-
-type DiffChangeRow = {
-  id: string;
-  position: number;
-  category: string;
-  changeType: string;
-  subcategory: string | null;
-  path: string | null;
-  method: string | null;
-  component: string | null;
-  field: string | null;
-  basePointer: string | null;
-  targetPointer: string | null;
-  displayPointer: string;
-  oldValue: unknown;
-  newValue: unknown;
-  oldValuePresent: boolean;
-  newValuePresent: boolean;
-};
-
-export function toDiffChange(row: DiffChangeRow) {
-  return {
-    id: row.id,
-    position: row.position,
-    category: row.category,
-    changeType: row.changeType,
-    subcategory: row.subcategory,
-    path: row.path,
-    method: row.method,
-    component: row.component,
-    field: row.field,
-    basePointer: row.basePointer,
-    targetPointer: row.targetPointer,
-    displayPointer: row.displayPointer,
-    oldValue: row.oldValue,
-    newValue: row.newValue,
-    oldValuePresent: row.oldValuePresent,
-    newValuePresent: row.newValuePresent,
-  };
-}
-
-export function toDeprecation(row: DeprecationRow) {
-  return {
-    id: row.id,
-    position: row.position,
-    pointer: row.pointer,
-    path: row.path,
-    method: row.method,
-    oldValue: row.oldValue,
-    newValue: row.newValue,
-    oldValuePresent: row.oldValuePresent,
-    newValuePresent: row.newValuePresent,
   };
 }

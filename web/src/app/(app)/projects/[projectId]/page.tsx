@@ -171,7 +171,6 @@ export default async function ProjectPage({ params }: PageProps) {
                 <tr>
                   <th className="px-5 py-3 font-medium">Versions</th>
                   <th className="px-5 py-3 font-medium">Changes</th>
-                  <th className="px-5 py-3 font-medium">Breaking</th>
                   <th className="px-5 py-3 font-medium">Status</th>
                   <th className="px-5 py-3 font-medium">Date</th>
                 </tr>
@@ -188,10 +187,7 @@ export default async function ProjectPage({ params }: PageProps) {
                       </Link>
                     </td>
                     <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
-                      {comparison.totalChangelog}
-                    </td>
-                    <td className="px-5 py-3 text-zinc-600 dark:text-zinc-400">
-                      {comparison.totalBreaking}
+                      {comparison.totalChanges}
                     </td>
                     <td className="px-5 py-3">
                       <span

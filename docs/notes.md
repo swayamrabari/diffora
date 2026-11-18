@@ -110,30 +110,31 @@ The Go service must return only `text` plus the line, with `file`, `id`, `level`
 - Changes can appear under an operation and under the component it references. The operation copy is often an inlined resolved schema, not a `$ref` change.
 - `from: null` means the value did not exist on that side.
 
-## Phase 1 service calls (v3)
+## Current service calls (v4)
 
-The Go service now runs four commands in one temp directory:
+The Go service runs exactly one comparison command in one temp directory:
 
 ```text
-oasdiff diff      base.json target.json -f json --allow-external-refs=false
-oasdiff changelog base.json target.json -f json --allow-external-refs=false
-oasdiff summary   base.json target.json -f json --allow-external-refs=false
-oasdiff breaking  base.json target.json -f json --allow-external-refs=false
+oasdiff diff base.json target.json -f json --allow-external-refs=false
 ```
 
-Confirmed output:
+`validate` remains a separate call for uploads:
 
-- `changelog -f json` is an array of findings: `id`, `text`, `level`, `operation`, `operationId`, `path`, `section`, `revisionSource`, `fingerprint`.
-- `summary -f json` is an object with `diff` and `details` counts by endpoints/paths/schemas.
-- `breaking -f json` uses the same finding shape and contains only breaking items.
-- `level` is `1` info, `2` warning, `3` error. The service also returns `levelName`.
-- `revisionSource.file` and `fingerprint` are stripped from the public response.
-- `deprecations` is extracted from `diff` where `deprecated` becomes `true`. Example: `/paths/~1pets/get/deprecated`.
-- `changes` is the structured, deduplicated diff. It resolves `$ref` operation copies to component pointers and assigns categories such as endpoint, operation, parameter, request, response, header, schema, security, server, metadata, and webhook. The test pair produces 73 unique structured changes from 109 changelog findings.
+```text
+oasdiff validate input.json -f json --allow-external-refs=false
+```
+
+The service returns only `engineVersion`, `durationMs`, and a deduplicated `changes` array.
+
+- `changes` is the structured diff. It resolves `$ref` operation copies to canonical component pointers and assigns categories such as endpoint, operation, parameter, request, response, header, schema, security, server, metadata, and webhook.
+- Changes are deduplicated by change type plus resolved base/target pointer.
+- Pointers are internal only. They are omitted from the response and the database.
+- The reference pair produces **68 unique changes**.
+- There is no changelog, summary, breaking, deprecation, or raw diff output.
 
 The service writes the uploaded YAML/JSON as-is and passes it to oasdiff. There is no YAML converter, metadata extraction, or external-ref pre-scan. Both inputs must use the same format; mixed formats return `400 FORMAT_MISMATCH`. Every result is JSON.
 
-The web app stores `rawDiffText` as text, `summary` and `deprecations` as JSON, and changelog/breaking items as individual `ComparisonFinding` rows for filtering. The full normalizer, `usedBy`, and `DetectedChange` table are not part of v3.
+The web app stores the array in one JSONB `changes` column plus `totalChanges` on `Comparison`. The full normalizer, `usedBy`, and `DetectedChange` table are not used.
 
 ## Fixture results
 

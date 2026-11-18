@@ -21,9 +21,6 @@ type fakeEngine struct {
 	validate     string
 	validateExit int
 	diff         string
-	changelog    string
-	summary      string
-	breaking     string
 }
 
 func (f *fakeEngine) Run(_ context.Context, _ string, _ time.Duration, args ...string) (oasdiff.Result, error) {
@@ -32,12 +29,6 @@ func (f *fakeEngine) Run(_ context.Context, _ string, _ time.Duration, args ...s
 		return oasdiff.Result{Stdout: []byte(f.validate), ExitCode: f.validateExit}, nil
 	case "diff":
 		return oasdiff.Result{Stdout: []byte(f.diff)}, nil
-	case "changelog":
-		return oasdiff.Result{Stdout: []byte(f.changelog)}, nil
-	case "summary":
-		return oasdiff.Result{Stdout: []byte(f.summary)}, nil
-	case "breaking":
-		return oasdiff.Result{Stdout: []byte(f.breaking)}, nil
 	default:
 		return oasdiff.Result{ExitCode: 1}, nil
 	}
@@ -157,17 +148,14 @@ func TestValidateInvalidSpec(t *testing.T) {
 
 func TestDiffSuccess(t *testing.T) {
 	engine := &fakeEngine{
-		diff:      `{"paths":{"modified":{"/pets":{"operations":{"modified":{"GET":{"deprecated":{"from":false,"to":true}}}}}}}}`,
-		changelog: `[{"id":"api-deprecated","text":"API GET /pets is deprecated","level":2,"operation":"GET","path":"/pets","section":"paths","revisionSource":{"file":"C:\\secret\\target.yaml","line":10,"column":4},"fingerprint":"abc"}]`,
-		summary:   `{"diff":true,"details":{"endpoints":{"modified":1}}}`,
-		breaking:  `[]`,
+		diff: `{"info":{"description":{"from":"A","to":"B"}}}`,
 	}
 	server := testServer(t, engine)
 	defer server.Close()
 
 	body := []byte(`{
-		"base":{"content":"{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"Pets\",\"version\":\"1\"},\"paths\":{}}","format":"json"},
-		"target":{"content":"{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"Pets\",\"version\":\"2\"},\"paths\":{}}","format":"json"}
+		"base":{"content":"{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"Pets\",\"version\":\"1\",\"description\":\"A\"},\"paths\":{}}","format":"json"},
+		"target":{"content":"{\"openapi\":\"3.0.3\",\"info\":{\"title\":\"Pets\",\"version\":\"2\",\"description\":\"B\"},\"paths\":{}}","format":"json"}
 	}`)
 	response := request(t, http.MethodPost, server.URL+"/diff", "secret", "application/json", body)
 	defer response.Body.Close()
@@ -180,24 +168,22 @@ func TestDiffSuccess(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(payload.Changelog) != 1 || payload.Changelog[0].LevelName != "warning" {
-		t.Fatalf("unexpected changelog: %+v", payload.Changelog)
+	if len(payload.Changes) != 1 {
+		t.Fatalf("expected one structured change, got %+v", payload.Changes)
 	}
-	if payload.Changelog[0].Line == nil || *payload.Changelog[0].Line != 10 {
-		t.Fatalf("line was not preserved: %+v", payload.Changelog[0])
+	change := payload.Changes[0]
+	if change.Category != "metadata" || change.Field == nil || *change.Field != "description" {
+		t.Fatalf("unexpected change: %+v", change)
 	}
-	if len(payload.Deprecations) != 1 {
-		t.Fatalf("expected one deprecation, got %+v", payload.Deprecations)
+	if !change.OldValuePresent || !change.NewValuePresent {
+		t.Fatalf("expected old and new values: %+v", change)
 	}
-	if payload.Deprecations[0].Pointer != "/paths/~1pets/get/deprecated" {
-		t.Fatalf("unexpected deprecation pointer: %+v", payload.Deprecations[0])
-	}
-	if !strings.Contains(string(payload.Summary), "endpoints") {
-		t.Fatalf("unexpected summary: %s", payload.Summary)
+	if change.ID != "c0" {
+		t.Fatalf("unexpected change id: %q", change.ID)
 	}
 
 	encoded, _ := json.Marshal(payload)
-	if strings.Contains(string(encoded), "secret") || strings.Contains(string(encoded), "fingerprint") {
+	if strings.Contains(string(encoded), "secret") || strings.Contains(string(encoded), "basePointer") {
 		t.Fatalf("sensitive data leaked: %s", encoded)
 	}
 }

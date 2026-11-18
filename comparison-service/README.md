@@ -1,6 +1,6 @@
 # Comparison service
 
-Stateless Go HTTP service that runs the pinned oasdiff binary. It never touches the database. It is a thin proxy: the uploaded YAML/JSON is written as-is and passed to oasdiff; there is no YAML converter or metadata layer.
+Stateless Go HTTP service that runs the pinned oasdiff binary. It never touches the database. It writes the uploaded YAML/JSON as-is and passes it to oasdiff; there is no converter or metadata layer.
 
 ## Run
 
@@ -17,7 +17,7 @@ go run ./cmd/server
 |---|---|---|---|
 | GET | `/health` | none | `{ "status": "ok", "engineVersion": "1.38.0" }` |
 | POST | `/validate` | `X-Shared-Secret` | Validate one YAML/JSON spec |
-| POST | `/diff` | `X-Shared-Secret` | Return raw diff + changelog + summary + breaking + deprecations |
+| POST | `/diff` | `X-Shared-Secret` | Return one deduplicated `changes` array |
 
 `POST /validate` body:
 
@@ -34,22 +34,40 @@ go run ./cmd/server
 }
 ```
 
+`POST /diff` runs exactly one engine command:
+
+```text
+oasdiff diff base.<yaml|json> target.<yaml|json> -f json --allow-external-refs=false
+```
+
 `POST /diff` response:
 
 ```json
 {
   "engineVersion": "1.38.0",
   "durationMs": 412,
-  "rawDiffText": "{\"info\":...}",
-  "changelog": [],
-  "summary": { "diff": true, "details": {} },
-  "breaking": [],
-  "deprecations": [],
-  "changes": []
+  "changes": [
+    {
+      "id": "c0",
+      "category": "schema",
+      "changeType": "added",
+      "subcategory": null,
+      "path": null,
+      "method": null,
+      "component": "NewPet",
+      "field": "tag",
+      "newValue": { "maxLength": 40, "type": "string" },
+      "oldValuePresent": false,
+      "newValuePresent": true
+    }
+  ]
 }
 ```
 
-`changes` is the structured, deduplicated diff built from the raw diff. Each item has a category, change type, path/method/component, field, base/target pointers, and old/new values. Operation copies are resolved through `$ref` to their component pointers and deduplicated.
+- `changes` is the deduplicated, user-facing diff. Each item has a stable `id`, category, change type, optional path/method/component/field, and old/new values with presence flags.
+- `$ref` operation copies collapse onto their canonical component locations before deduplication.
+- JSON pointers are internal only. They are used for deduplication but never returned.
+- There is no changelog, summary, breaking, deprecation, or raw diff output.
 
 Both inputs must use the same format. Mixing YAML and JSON returns `400 FORMAT_MISMATCH`. All results are JSON.
 
@@ -68,4 +86,4 @@ Without `OASDIFF_BIN`, the real-engine integration test is skipped; the unit and
 - `--allow-external-refs=false`; external refs are rejected by the engine and mapped to `EXTERNAL_REF_NOT_SUPPORTED`.
 - Temp directories are mode `0700`; files are `0600` and removed with `defer`.
 - Output caps, request caps, timeouts, panic recovery, and graceful shutdown.
-- File paths and engine fingerprints are stripped from public findings.
+- Validation findings are sanitized before they are returned.

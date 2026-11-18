@@ -104,3 +104,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Write uploaded YAML/JSON as-is and pass it to oasdiff. Require both compared versions to use the same format; return `400 FORMAT_MISMATCH` for mixed YAML/JSON. Return JSON-only results. Store `rawDiffText` as text, `summary`/`deprecations` as JSON, and changelog/breaking items as `ComparisonFinding` rows.
 - Consequences: The service is much smaller and has no YAML parity surface. The UI can filter findings with SQL instead of parsing one large JSON blob. Mixed-format comparisons are intentionally rejected.
 
+## 2026-11-18 — One diff command, one changes array, one workspace
+
+- Context: Running `diff`, `changelog`, `summary`, and `breaking`, then storing findings, structured changes, and deprecations separately, duplicated the same information in the service, database, and UI. The tabs made the product harder to use than the underlying comparison.
+- Decision: The Go service runs only `oasdiff diff -f json --allow-external-refs=false`. It returns `engineVersion`, `durationMs`, and one deduplicated `changes` array. The web app stores that array in one JSONB `changes` column plus `totalChanges` on `Comparison`, drops `ComparisonFinding`, `ComparisonDiffChange`, and `ComparisonDeprecation`, and renders a single-page workspace with a collapsible summary, filters, a grouped tree, and one unified diff.
+- Consequences: Deprecated is a tag/filter, not a tab. Breaking, Deprecations, Source diff, raw findings, and technical pointers are removed from the product. This supersedes the multi-output, per-finding table, grouping, and tab decisions above. The reference pair stores 68 unique changes, and pointers remain internal only.
+

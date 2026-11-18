@@ -32,17 +32,8 @@ type Finding struct {
 	EndColumn   *int   `json:"endColumn,omitempty"`
 }
 
-type Deprecation struct {
-	Pointer         string `json:"pointer"`
-	Path            string `json:"path,omitempty"`
-	Method          string `json:"method,omitempty"`
-	OldValue        any    `json:"oldValue,omitempty"`
-	NewValue        any    `json:"newValue,omitempty"`
-	OldValuePresent bool   `json:"oldValuePresent"`
-	NewValuePresent bool   `json:"newValuePresent"`
-}
-
 type DiffChange struct {
+	ID              string          `json:"id"`
 	Category        string          `json:"category"`
 	ChangeType      string          `json:"changeType"`
 	Subcategory     *string         `json:"subcategory"`
@@ -50,9 +41,9 @@ type DiffChange struct {
 	Method          *string         `json:"method"`
 	Component       *string         `json:"component"`
 	Field           *string         `json:"field"`
-	BasePointer     *string         `json:"basePointer"`
-	TargetPointer   *string         `json:"targetPointer"`
-	DisplayPointer  string          `json:"displayPointer"`
+	BasePointer     *string         `json:"-"`
+	TargetPointer   *string         `json:"-"`
+	DisplayPointer  string          `json:"-"`
 	OldValue        json.RawMessage `json:"oldValue,omitempty"`
 	NewValue        json.RawMessage `json:"newValue,omitempty"`
 	OldValuePresent bool            `json:"oldValuePresent"`
@@ -60,14 +51,9 @@ type DiffChange struct {
 }
 
 type DiffResponse struct {
-	EngineVersion string          `json:"engineVersion"`
-	DurationMs    int64           `json:"durationMs"`
-	RawDiffText   string          `json:"rawDiffText"`
-	Changelog     []Finding       `json:"changelog"`
-	Summary       json.RawMessage `json:"summary"`
-	Breaking      []Finding       `json:"breaking"`
-	Deprecations  []Deprecation   `json:"deprecations"`
-	Changes       []DiffChange    `json:"changes"`
+	EngineVersion string       `json:"engineVersion"`
+	DurationMs    int64        `json:"durationMs"`
+	Changes       []DiffChange `json:"changes"`
 }
 
 type ValidateResponse struct {
