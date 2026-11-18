@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { ComparisonWorkspace } from "@/components/comparisons/comparison-workspace";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
+import { Spinner } from "@/components/ui/spinner";
 import { getCurrentUser } from "@/lib/auth";
 import { findComparisonForUser } from "@/lib/queries";
 import type { DiffChangeItem } from "@/lib/structured-diff";
@@ -39,7 +40,13 @@ export default async function ComparisonPage({ params }: PageProps) {
         </span>
       </HeaderBreadcrumb>
 
-      <Suspense fallback={<div className="text-sm text-muted-foreground">Loading comparison…</div>}>
+      <Suspense
+        fallback={
+          <div className="fixed inset-x-0 top-12 bottom-0 z-20 flex items-center justify-center bg-background">
+            <Spinner className="size-6 text-muted-foreground" />
+          </div>
+        }
+      >
         <ComparisonWorkspace
           status={comparison.status}
           errorMessage={comparison.errorMessage}
