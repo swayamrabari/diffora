@@ -13,6 +13,8 @@ import { findProjectForUser } from "@/lib/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Vercel: allow long diffs on Pro (Hobby caps at 60s).
+export const maxDuration = 300;
 
 const bodySchema = z.object({
   baseVersionId: z.string().uuid(),

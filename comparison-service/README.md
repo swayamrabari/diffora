@@ -93,6 +93,19 @@ go test ./...
 
 Without `OASDIFF_BIN`, the real-engine integration test is skipped; the unit and HTTP contract tests still run.
 
+## Deployment
+
+The service ships as a Docker image. `fly.toml` is ready for Fly.io:
+
+```powershell
+# set `app` and `primary_region` in fly.toml first
+fly apps create <your-app-name>
+fly secrets set SHARED_SECRET="<shared secret>"
+fly deploy
+```
+
+`SHARED_SECRET` must match `COMPARISON_SHARED_SECRET` in the web app. Keep one machine warm (`auto_stop_machines = "off"`) so comparisons do not pay a cold start. Cloud Run and Render/Railway instructions are in [`../DEPLOYMENT.md`](../DEPLOYMENT.md).
+
 ## Safety
 
 - Fixed oasdiff arguments, no shell, no user text in arguments.

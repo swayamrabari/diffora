@@ -1,6 +1,6 @@
 # Diffora web
 
-See the root [`README.md`](../README.md) for setup and [`DIFFORA.md`](../DIFFORA.md) for the specification.
+See the root [`README.md`](../README.md) for setup, [`DIFFORA.md`](../DIFFORA.md) for the specification, and [`DEPLOYMENT.md`](../DEPLOYMENT.md) for production deployment.
 
 ## Commands
 

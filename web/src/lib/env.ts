@@ -17,14 +17,19 @@ const schema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
-  APP_ORIGIN: z.string().url(),
+  APP_ORIGIN: z
+    .string()
+    .url()
+    .transform((value) => value.replace(/\/+$/, "")),
 
   COMPARISON_SERVICE_URL: z.string().url(),
   COMPARISON_SHARED_SECRET: z.string().min(1),
   COMPARISON_TIMEOUT_MS: intString(90_000),
 
+  DATABASE_POOL_MAX: intString(5),
+
   MAX_SPEC_BYTES: intString(2 * 1024 * 1024),
-  MAX_UPLOAD_REQUEST_BYTES: intString(6 * 1024 * 1024),
+  MAX_UPLOAD_REQUEST_BYTES: intString(4 * 1024 * 1024),
   MAX_DIFF_RESPONSE_BYTES: intString(64 * 1024 * 1024),
   MAX_CHANGES_PER_COMPARISON: intString(5_000),
 });

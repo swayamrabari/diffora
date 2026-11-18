@@ -10,7 +10,12 @@ const globalForPrisma = globalThis as unknown as {
 export function getDb(): PrismaClient {
   if (!globalForPrisma.prisma) {
     const env = getEnv();
-    const adapter = new PrismaPg({ connectionString: env.DATABASE_URL });
+    const adapter = new PrismaPg({
+      connectionString: env.DATABASE_URL,
+      max: env.DATABASE_POOL_MAX,
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 10_000,
+    });
     globalForPrisma.prisma = new PrismaClient({
       adapter,
       log: ["warn", "error"],

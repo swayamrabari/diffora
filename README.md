@@ -27,13 +27,17 @@ The app is complete end to end:
 - Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
 - Full end-to-end test against Supabase: the reference pair stores **82 unique changes**, all with source hunks, exports all 82, and exposes no internal pointers.
 
+## Deployment
+
+Production runs the web app on **Vercel**, the comparison service as a **Docker container** (Fly.io recommended, Cloud Run supported), and Postgres on **Supabase**. Full instructions, environment variables, limits, and the pre-deploy checklist are in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
 ## Stack
 
 - Next.js 16.4.6, React 19.3.0, TypeScript
 - Tailwind CSS 4, shadcn/ui
 - Prisma + Supabase PostgreSQL
 - Go comparison service running oasdiff
-- Docker Compose for the local stack
+- Docker image for the Go service (Fly.io or Cloud Run)
 
 ## Repository layout
 
@@ -60,8 +64,8 @@ Diffora/
 
 - Node.js 22 LTS and npm
 - Go 1.27.x
-- Docker (for later phases)
-- A Supabase project (for later phases)
+- Docker (optional, to build the comparison-service image)
+- A Supabase project (local development and production)
 - oasdiff **1.38.0**
 
 ## Pin and verify oasdiff
@@ -225,8 +229,9 @@ With at least two versions uploaded, use **Compare** on the project page.
 
 ## Next steps
 
-1. Security hardening and packaging review.
-2. Docker Compose and deployment documentation.
+1. Deploy the web app and comparison service with [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+2. Add an uptime monitor for `/api/health` and the Go `/health`.
+3. Optional hardening: CSP, rate limiting on auth routes, and storage-backed uploads if specs grow past 2 MB.
 
 ## Security notes
 

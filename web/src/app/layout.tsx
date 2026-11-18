@@ -18,8 +18,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Diffora",
-  description: "API specification comparison tool",
+  metadataBase: process.env.APP_ORIGIN
+    ? new URL(process.env.APP_ORIGIN)
+    : undefined,
+  applicationName: "Diffora",
+  title: {
+    default: "Diffora",
+    template: "%s · Diffora",
+  },
+  description: "Compare OpenAPI specifications and review every change.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

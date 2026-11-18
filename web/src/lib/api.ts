@@ -28,7 +28,15 @@ export function isJsonRequest(request: Request): boolean {
 export function isSameOrigin(request: Request): boolean {
   const origin = request.headers.get("origin");
   if (origin) {
-    return origin === getEnv().APP_ORIGIN;
+    // Accept the configured origin and the host that served the request, so
+    // preview deployments and custom domains work without extra configuration.
+    const allowed = new Set([getEnv().APP_ORIGIN]);
+    const host = request.headers.get("host");
+    if (host) {
+      const proto = request.headers.get("x-forwarded-proto") ?? "https";
+      allowed.add(`${proto}://${host}`);
+    }
+    return allowed.has(origin.replace(/\/+$/, ""));
   }
   const site = request.headers.get("sec-fetch-site");
   return !site || site === "same-origin" || site === "none";

@@ -17,6 +17,8 @@ type UploadVersionDialogProps = {
   projectId: string;
 };
 
+const MAX_SPEC_BYTES = 2 * 1024 * 1024;
+
 export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -44,6 +46,13 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
 
   function onFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0] ?? null;
+    if (selected && selected.size > MAX_SPEC_BYTES) {
+      event.target.value = "";
+      setFile(null);
+      setError("The spec file is too large. The maximum is 2 MB.");
+      return;
+    }
+    setError(null);
     setFile(selected);
     if (selected && !label) {
       setLabel(selected.name.replace(/\.(ya?ml|json)$/i, "").slice(0, 50));
@@ -54,6 +63,10 @@ export function UploadVersionDialog({ projectId }: UploadVersionDialogProps) {
     event.preventDefault();
     if (!file) {
       setError("Choose a YAML or JSON file.");
+      return;
+    }
+    if (file.size > MAX_SPEC_BYTES) {
+      setError("The spec file is too large. The maximum is 2 MB.");
       return;
     }
 
