@@ -338,7 +338,7 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col lg:flex-row">
-      <aside className="flex max-h-40 shrink-0 flex-col border-b border-sidebar-border bg-sidebar text-sidebar-foreground lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
+      <aside className="flex max-h-40 shrink-0 flex-col border-b border-sidebar-border text-sidebar-foreground lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
         <div className="flex gap-1 overflow-x-auto p-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:p-3">
           <TypeButton
             label="All changes"
