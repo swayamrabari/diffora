@@ -157,7 +157,7 @@ function SourceDiffBody({ hunks }: { hunks: SourceHunk[] }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent className="px-4 py-3 [&>code]:w-full">
+      <CodeBlockContent className="pr-4 pl-8 py-3 [&>code]:w-full">
         {rows.map((line, index) => (
           <SourceLineRow key={`${line.kind}-${index}`} line={line} />
         ))}
@@ -179,7 +179,7 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent lineNumbers className="px-4 py-3 [&>code]:w-full">
+      <CodeBlockContent lineNumbers className="pr-4 pl-8 py-3 [&>code]:w-full">
         {lines.map((line, index) => (
           <CodeBlockLine
             key={`${line.kind}-${index}`}
