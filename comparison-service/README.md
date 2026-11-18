@@ -44,9 +44,12 @@ go run ./cmd/server
   "changelog": [],
   "summary": { "diff": true, "details": {} },
   "breaking": [],
-  "deprecations": []
+  "deprecations": [],
+  "changes": []
 }
 ```
+
+`changes` is the structured, deduplicated diff built from the raw diff. Each item has a category, change type, path/method/component, field, base/target pointers, and old/new values. Operation copies are resolved through `$ref` to their component pointers and deduplicated.
 
 Both inputs must use the same format. Mixing YAML and JSON returns `400 FORMAT_MISMATCH`. All results are JSON.
 

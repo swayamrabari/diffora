@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui/dialog";
+import { Dialog, fieldClass, primaryButtonClass, secondaryButtonClass } from "@/components/ui/app-dialog";
 
 type UploadVersionDialogProps = {
   projectId: string;

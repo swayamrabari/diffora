@@ -129,6 +129,7 @@ Confirmed output:
 - `level` is `1` info, `2` warning, `3` error. The service also returns `levelName`.
 - `revisionSource.file` and `fingerprint` are stripped from the public response.
 - `deprecations` is extracted from `diff` where `deprecated` becomes `true`. Example: `/paths/~1pets/get/deprecated`.
+- `changes` is the structured, deduplicated diff. It resolves `$ref` operation copies to component pointers and assigns categories such as endpoint, operation, parameter, request, response, header, schema, security, server, metadata, and webhook. The test pair produces 73 unique structured changes from 109 changelog findings.
 
 The service writes the uploaded YAML/JSON as-is and passes it to oasdiff. There is no YAML converter, metadata extraction, or external-ref pre-scan. Both inputs must use the same format; mixed formats return `400 FORMAT_MISMATCH`. Every result is JSON.
 

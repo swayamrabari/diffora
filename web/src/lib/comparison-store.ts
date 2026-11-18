@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-import type { Deprecation, Finding } from "@/types/comparison";
+import type { Deprecation, DiffChange, Finding } from "@/types/comparison";
 
 export function chunk<T>(items: T[], size: number): T[][] {
   if (size <= 0) {
@@ -33,6 +33,27 @@ export function findingRows(
     column: finding.column ?? null,
     endLine: finding.endLine ?? null,
     endColumn: finding.endColumn ?? null,
+  }));
+}
+
+export function diffChangeRows(comparisonId: string, changes: DiffChange[]) {
+  return changes.map((change, position) => ({
+    comparisonId,
+    position,
+    category: change.category,
+    changeType: change.changeType,
+    subcategory: change.subcategory,
+    path: change.path,
+    method: change.method,
+    component: change.component,
+    field: change.field,
+    basePointer: change.basePointer,
+    targetPointer: change.targetPointer,
+    displayPointer: change.displayPointer,
+    oldValue: jsonValue(change.oldValuePresent, change.oldValue),
+    newValue: jsonValue(change.newValuePresent, change.newValue),
+    oldValuePresent: change.oldValuePresent,
+    newValuePresent: change.newValuePresent,
   }));
 }
 

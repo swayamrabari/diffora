@@ -66,6 +66,7 @@ model Comparison {
   totalChangelog    Int        @default(0)
   totalBreaking     Int        @default(0)
   totalDeprecations Int        @default(0)
+  totalDiffChanges  Int        @default(0)
   errorMessage      String?    @db.Text
   createdAt         DateTime   @default(now()) @db.Timestamptz(3)
   project           Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -73,6 +74,7 @@ model Comparison {
   targetVersion     ApiVersion @relation("targetVersion", fields: [targetVersionId], references: [id], onDelete: Cascade)
   findings          ComparisonFinding[]
   deprecations      ComparisonDeprecation[]
+  diffChanges       ComparisonDiffChange[]
 
   @@index([projectId, createdAt])
   @@index([baseVersionId])
@@ -104,6 +106,34 @@ model ComparisonFinding {
   @@index([comparisonId, kind, ruleId])
   @@index([comparisonId, kind, operation])
   @@index([comparisonId, kind, path])
+}
+
+model ComparisonDiffChange {
+  id              String     @id @default(uuid()) @db.Uuid
+  comparisonId    String     @db.Uuid
+  position        Int
+  category        String     @db.VarChar(20)
+  changeType      String     @db.VarChar(10)
+  subcategory     String?    @db.VarChar(100)
+  path            String?    @db.VarChar(500)
+  method          String?    @db.VarChar(10)
+  component       String?    @db.VarChar(200)
+  field           String?    @db.VarChar(200)
+  basePointer     String?    @db.Text
+  targetPointer   String?    @db.Text
+  displayPointer  String     @db.Text
+  oldValue        Json?
+  newValue        Json?
+  oldValuePresent Boolean    @default(false)
+  newValuePresent Boolean    @default(false)
+  comparison      Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, position])
+  @@index([comparisonId, category])
+  @@index([comparisonId, changeType])
+  @@index([comparisonId, path])
+  @@index([comparisonId, method])
+  @@index([comparisonId, component])
 }
 
 model ComparisonDeprecation {

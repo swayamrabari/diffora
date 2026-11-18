@@ -6,6 +6,7 @@ import { findComparisonForUser } from "@/lib/queries";
 import {
   toComparisonDetail,
   toDeprecation,
+  toDiffChange,
   toFinding,
 } from "@/lib/serializers";
 
@@ -27,10 +28,14 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const db = getDb();
-  const [findings, deprecations] = await Promise.all([
+  const [findings, diffChanges, deprecations] = await Promise.all([
     db.comparisonFinding.findMany({
       where: { comparisonId: comparison.id },
       orderBy: [{ kind: "asc" }, { position: "asc" }],
+    }),
+    db.comparisonDiffChange.findMany({
+      where: { comparisonId: comparison.id },
+      orderBy: { position: "asc" },
     }),
     db.comparisonDeprecation.findMany({
       where: { comparisonId: comparison.id },
@@ -52,6 +57,7 @@ export async function GET(_request: Request, context: RouteContext) {
     exportedAt: new Date().toISOString(),
     comparison: toComparisonDetail(comparison),
     findings: findings.map(toFinding),
+    diffChanges: diffChanges.map(toDiffChange),
     deprecations: deprecations.map(toDeprecation),
     rawDiff,
   };

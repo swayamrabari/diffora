@@ -24,16 +24,17 @@ oasdiff breaking  base.<yaml|json> target.<yaml|json> -f json --allow-external-r
 
 - The Go service is a thin proxy. It writes the uploaded content as-is and passes it to oasdiff. There is no YAML converter, no metadata extraction, and no external-ref pre-scan.
 - Both compared versions must use the same format. Mixing YAML and JSON returns `400 FORMAT_MISMATCH`. Every result is JSON.
-- The service returns `rawDiffText`, `changelog`, `summary`, `breaking`, and `deprecations` directly.
+- The service returns `rawDiffText`, `changelog`, `summary`, `breaking`, `deprecations`, and structured `changes`.
 - `changelog` is the primary Changes list. It is a flat, per-operation array.
 - `summary` is displayed as-is in the Summary tab.
 - `breaking` is displayed as-is in the Breaking tab.
 - `deprecations` is a small subset extracted from `diff` where `deprecated` changes to `true`.
 - Severity/level labels are now allowed. This intentionally removes the v1 “no breaking/warning/severity labels” rule.
-- There is no full normalizer, no `usedBy`, no component deduplication, and no `DetectedChange` table.
+- There is no full semantic normalizer (no `usedBy`, no generated titles, no manual value merging). A focused structured diff pass follows `$ref` to component pointers, deduplicates operation copies, and assigns categories. The old `DetectedChange` table is still not used; `ComparisonDiffChange` replaces it for the type-based Changes view.
 - `Comparison` stores `rawDiffText` (`Text`), `summary` (`Json`), `deprecations` (`Json`), counts, `engineVersion`, `durationMs`, `status`, and `errorMessage`.
 - `ComparisonFinding` stores one row per changelog or breaking item: `kind` (`changelog` or `breaking`), `position`, `level`, `levelName`, `ruleId`, `text`, `operation`, `operationId`, `path`, `section`, `line`, `column`, `endLine`, `endColumn`. Index filters by comparison, kind, level, path, section, and rule ID.
-- Changelog and breaking data are stored as rows rather than one giant JSON blob so the UI can filter and paginate without parsing everything.
+- `ComparisonDiffChange` stores the structured, deduplicated diff: `category`, `changeType`, `subcategory`, `path`, `method`, `component`, `field`, base/target pointers, old/new values and presence flags. The Go service follows `$ref` to component pointers and deduplicates operation copies.
+- Changelog and breaking data are stored as rows rather than one giant JSON blob so the UI can filter and paginate without parsing everything. The Changes tab uses `ComparisonDiffChange`; Breaking and Deprecations use their own tables.
 
 **Go `/diff` response contract:**
 
@@ -68,11 +69,29 @@ oasdiff breaking  base.<yaml|json> target.<yaml|json> -f json --allow-external-r
       "oldValuePresent": true,
       "newValuePresent": true
     }
+  ],
+  "changes": [
+    {
+      "category": "parameter",
+      "changeType": "modified",
+      "subcategory": "query",
+      "path": "/pets",
+      "method": "GET",
+      "component": null,
+      "field": "maximum",
+      "basePointer": "/paths/~1pets/get/parameters/1/schema/maximum",
+      "targetPointer": "/paths/~1pets/get/parameters/1/schema/maximum",
+      "displayPointer": "/paths/~1pets/get/parameters/1/schema/maximum",
+      "oldValue": 100,
+      "newValue": 200,
+      "oldValuePresent": true,
+      "newValuePresent": true
+    }
   ]
 }
 ```
 
-**UI tabs:** Summary, Changes, Breaking, Deprecations, Source diff. Rich filters operate on the flat changelog array (search, level, section, method, path, rule ID). Before/after value panels are optional and would require a thin diff extractor.
+**UI tabs:** Summary, Changes, Breaking, Deprecations, Source diff. Changes uses the structured `ComparisonDiffChange` rows with type/endpoint grouping, filters, and Before/After value panels. Breaking uses grouped changelog rows. Deprecations uses readable labels. Source diff remains a separate canonical-text diff.
 
 **Superseded v2 sections:**
 

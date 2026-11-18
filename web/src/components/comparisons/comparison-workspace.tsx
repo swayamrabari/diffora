@@ -5,7 +5,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { CopyButton } from "@/components/ui/copy-button";
 import { DeleteComparisonButton } from "@/components/comparisons/delete-comparison-button";
+import { StructuredDiffView } from "@/components/comparisons/structured-diff-view";
 import { formatDate } from "@/lib/format";
+import {
+  categoryLabels,
+  type DiffChangeItem,
+} from "@/lib/structured-diff";
 import {
   buildFindingTree,
   groupFindings,
@@ -35,6 +40,7 @@ type ComparisonInfo = {
   totalChangelog: number;
   totalBreaking: number;
   totalDeprecations: number;
+  totalDiffChanges: number;
   summary: unknown;
   errorMessage: string | null;
   createdAt: string;
@@ -51,6 +57,7 @@ type SummaryShape = {
 type ComparisonWorkspaceProps = {
   comparison: ComparisonInfo;
   findings: FindingItem[];
+  diffChanges: DiffChangeItem[];
   deprecations: DeprecationItem[];
 };
 
@@ -195,6 +202,7 @@ function TreeNode({
 export function ComparisonWorkspace({
   comparison,
   findings,
+  diffChanges,
   deprecations,
 }: ComparisonWorkspaceProps) {
   const router = useRouter();
@@ -225,10 +233,9 @@ export function ComparisonWorkspace({
     () => findings.filter((finding) => finding.kind === "breaking"),
     [findings],
   );
-  const uniqueChangelog = useMemo(() => groupFindings(changelog, true).length, [changelog]);
   const uniqueBreaking = useMemo(() => groupFindings(breaking, true).length, [breaking]);
 
-  const activeFindings = tab === "breaking" ? breaking : changelog;
+  const activeFindings = breaking;
   const filteredFindings = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return activeFindings.filter((finding) => {
@@ -301,6 +308,14 @@ export function ComparisonWorkspace({
     return counts;
   }, [changelog]);
 
+  const structuredCategoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const change of diffChanges) {
+      counts[change.category] = (counts[change.category] ?? 0) + 1;
+    }
+    return counts;
+  }, [diffChanges]);
+
   function updateParams(values: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(values)) {
@@ -340,13 +355,14 @@ export function ComparisonWorkspace({
 
   const tabs: Array<{ id: Tab; label: string; count?: number }> = [
     { id: "summary", label: "Summary" },
-    { id: "changes", label: "Changes", count: comparison.totalChangelog },
+    { id: "changes", label: "Changes", count: comparison.totalDiffChanges },
     { id: "breaking", label: "Breaking", count: comparison.totalBreaking },
     { id: "deprecations", label: "Deprecations", count: comparison.totalDeprecations },
   ];
 
   const maxSection = Math.max(1, ...Object.values(sectionCounts));
   const maxLevel = Math.max(1, ...Object.values(levelCounts));
+  const maxCategory = Math.max(1, ...Object.values(structuredCategoryCounts));
 
   return (
     <div className="space-y-6">
@@ -396,7 +412,7 @@ export function ComparisonWorkspace({
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Findings", value: comparison.totalChangelog, hint: `${uniqueChangelog} unique` },
+          { label: "Diff changes", value: comparison.totalDiffChanges, hint: "deduplicated" },
           { label: "Breaking", value: comparison.totalBreaking, hint: `${uniqueBreaking} unique` },
           { label: "Deprecations", value: comparison.totalDeprecations, hint: "operation/component" },
           { label: "Status", value: comparison.status, hint: comparison.engineVersion },
@@ -438,9 +454,10 @@ export function ComparisonWorkspace({
 
       {tab === "summary" ? (
         <div className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "Unique changes", value: uniqueChangelog },
+              { label: "Structured changes", value: comparison.totalDiffChanges },
+              { label: "Raw findings", value: comparison.totalChangelog },
               { label: "Unique breaking", value: uniqueBreaking },
               { label: "Levels", value: `${levelCounts.info ?? 0} info / ${levelCounts.warning ?? 0} warn / ${levelCounts.error ?? 0} error` },
             ].map((card) => (
@@ -498,6 +515,26 @@ export function ComparisonWorkspace({
             </section>
           </div>
 
+          <section className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">By type</h2>
+            <div className="mt-4 space-y-3">
+              {Object.entries(structuredCategoryCounts).map(([name, count]) => (
+                <div key={name}>
+                  <div className="mb-1 flex justify-between text-xs text-zinc-600 dark:text-zinc-400">
+                    <span>{categoryLabels[name] ?? name}</span>
+                    <span>{count}</span>
+                  </div>
+                  <div className="h-2 rounded bg-zinc-100 dark:bg-zinc-800">
+                    <div
+                      className="h-2 rounded bg-zinc-900 dark:bg-zinc-200"
+                      style={{ width: `${(count / maxCategory) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
             <div className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
               <h2 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
@@ -529,7 +566,21 @@ export function ComparisonWorkspace({
         </div>
       ) : null}
 
-      {tab === "changes" || tab === "breaking" ? (
+      {tab === "changes" ? (
+        comparison.totalDiffChanges === 0 && comparison.totalChangelog > 0 ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+            <p className="font-medium">This comparison predates structured diff storage.</p>
+            <p className="mt-1">
+              Re-run the comparison from the project page to generate type-based, deduplicated changes
+              with before/after values.
+            </p>
+          </div>
+        ) : (
+          <StructuredDiffView changes={diffChanges} />
+        )
+      ) : null}
+
+      {tab === "breaking" ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <input

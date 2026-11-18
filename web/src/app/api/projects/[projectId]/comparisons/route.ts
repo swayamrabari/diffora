@@ -9,6 +9,7 @@ import {
 import {
   chunk,
   deprecationRows,
+  diffChangeRows,
   findingRows,
 } from "@/lib/comparison-store";
 import { getDb } from "@/lib/db";
@@ -43,6 +44,7 @@ function comparisonSummary(
     totalChangelog: number;
     totalBreaking: number;
     totalDeprecations: number;
+    totalDiffChanges: number;
     createdAt: Date;
   },
   base: VersionRow,
@@ -57,6 +59,7 @@ function comparisonSummary(
     totalChangelog: comparison.totalChangelog,
     totalBreaking: comparison.totalBreaking,
     totalDeprecations: comparison.totalDeprecations,
+    totalDiffChanges: comparison.totalDiffChanges,
     createdAt: comparison.createdAt,
     baseVersion: { id: base.id, label: base.label, title: base.title },
     targetVersion: { id: target.id, label: target.label, title: target.title },
@@ -216,6 +219,7 @@ export async function POST(request: Request, context: RouteContext) {
             totalChangelog: diff.changelog.length,
             totalBreaking: diff.breaking.length,
             totalDeprecations: diff.deprecations.length,
+            totalDiffChanges: diff.changes.length,
           },
         });
 
@@ -224,6 +228,9 @@ export async function POST(request: Request, context: RouteContext) {
         }
         for (const batch of chunk(findingRows(comparison.id, "breaking", diff.breaking), 500)) {
           await tx.comparisonFinding.createMany({ data: batch });
+        }
+        for (const batch of chunk(diffChangeRows(comparison.id, diff.changes), 500)) {
+          await tx.comparisonDiffChange.createMany({ data: batch });
         }
         for (const batch of chunk(deprecationRows(comparison.id, diff.deprecations), 500)) {
           await tx.comparisonDeprecation.createMany({ data: batch });

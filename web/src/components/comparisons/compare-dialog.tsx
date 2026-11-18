@@ -7,7 +7,7 @@ import {
   fieldClass,
   primaryButtonClass,
   secondaryButtonClass,
-} from "@/components/ui/dialog";
+} from "@/components/ui/app-dialog";
 
 type VersionOption = {
   id: string;

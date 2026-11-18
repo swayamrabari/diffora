@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Dialog, fieldClass, primaryButtonClass } from "@/components/ui/dialog";
+import { Dialog, fieldClass, primaryButtonClass } from "@/components/ui/app-dialog";
 
 export function NewProjectDialog() {
   const router = useRouter();

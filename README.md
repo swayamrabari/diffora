@@ -60,14 +60,16 @@ Phase 4 is complete:
 
 Phase 5 workspace is complete except the Source diff tab:
 
-- Interactive Changes and Breaking tabs with a nested endpoint → method tree.
-- Duplicate grouping on by default: groups by rule + source line/column, with variants and affected endpoints.
-- Search and filters for level, section, method, and free text.
-- Detail panel with rule, variants, affected endpoints, line/column, and copy JSON.
-- URL state for tab, filters, grouping, and selection.
-- Summary tab with unique counts, level/section bars, and engine summary details.
-- Deprecations tab with readable labels (`DELETE /pets/{petId}`, schema/property names) and old/new values instead of raw pointers.
-- Grouped/full toggle: 109 findings collapse to 58 groups in the test pair.
+- The Go service now returns a deduplicated `changes` array built from the raw diff.
+- `ComparisonDiffChange` rows store category, change type, parameter location/response code/header, path, method, component, field, pointers, old/new values, and presence flags.
+- Changes tab is type-first: Endpoints, Operations, Parameters, Requests, Responses, Headers, Schemas, Security, Servers, Metadata, Webhooks.
+- Group by type or endpoint; filter by type, change type, method, and free text.
+- Before/After panels show `-` and `+` values with copy buttons.
+- Duplicate operation copies collapse onto component pointers; the test pair stores **73 unique structured changes** across 109 changelog findings.
+- Breaking tab keeps source-location grouping (31 findings → 14 groups).
+- Summary tab shows structured counts, raw findings, levels, sections, and by-type bars.
+- Deprecations tab uses readable labels and old/new values.
+- Existing comparisons created before this migration show a “re-run” notice because they have no structured rows.
 
 Remaining: Source diff tab, final E2E, security hardening, and packaging.
 
@@ -251,7 +253,9 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The comparison page supports export and delete.
-- The full filterable workspace, Breaking tab, Deprecations tab, and source diff are Phase 5.
+- Changes tab uses the structured, deduplicated diff with before/after values.
+- Breaking and Deprecations tabs use the stored changelog/deprecation rows.
+- Source diff is the remaining Phase 5 item.
 
 ## Next steps
 

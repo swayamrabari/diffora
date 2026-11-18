@@ -4,7 +4,7 @@ import { ComparisonWorkspace } from "@/components/comparisons/comparison-workspa
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { findComparisonForUser } from "@/lib/queries";
-import { toDeprecation, toFinding } from "@/lib/serializers";
+import { toDeprecation, toDiffChange, toFinding } from "@/lib/serializers";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +23,15 @@ export default async function ComparisonPage({ params }: PageProps) {
   }
 
   const db = getDb();
-  const [findings, deprecations] = await Promise.all([
+  const [findings, diffChanges, deprecations] = await Promise.all([
     db.comparisonFinding.findMany({
       where: { comparisonId: comparison.id },
       orderBy: [{ kind: "asc" }, { position: "asc" }],
+      take: 10_000,
+    }),
+    db.comparisonDiffChange.findMany({
+      where: { comparisonId: comparison.id },
+      orderBy: { position: "asc" },
       take: 10_000,
     }),
     db.comparisonDeprecation.findMany({
@@ -47,6 +52,7 @@ export default async function ComparisonPage({ params }: PageProps) {
           totalChangelog: comparison.totalChangelog,
           totalBreaking: comparison.totalBreaking,
           totalDeprecations: comparison.totalDeprecations,
+          totalDiffChanges: comparison.totalDiffChanges,
           summary: comparison.summary,
           errorMessage: comparison.errorMessage,
           createdAt: comparison.createdAt.toISOString(),
@@ -63,6 +69,7 @@ export default async function ComparisonPage({ params }: PageProps) {
           },
         }}
         findings={findings.map(toFinding)}
+        diffChanges={diffChanges.map(toDiffChange)}
         deprecations={deprecations.map(toDeprecation)}
       />
     </Suspense>

@@ -42,6 +42,23 @@ type Deprecation struct {
 	NewValuePresent bool   `json:"newValuePresent"`
 }
 
+type DiffChange struct {
+	Category        string          `json:"category"`
+	ChangeType      string          `json:"changeType"`
+	Subcategory     *string         `json:"subcategory"`
+	Path            *string         `json:"path"`
+	Method          *string         `json:"method"`
+	Component       *string         `json:"component"`
+	Field           *string         `json:"field"`
+	BasePointer     *string         `json:"basePointer"`
+	TargetPointer   *string         `json:"targetPointer"`
+	DisplayPointer  string          `json:"displayPointer"`
+	OldValue        json.RawMessage `json:"oldValue,omitempty"`
+	NewValue        json.RawMessage `json:"newValue,omitempty"`
+	OldValuePresent bool            `json:"oldValuePresent"`
+	NewValuePresent bool            `json:"newValuePresent"`
+}
+
 type DiffResponse struct {
 	EngineVersion string          `json:"engineVersion"`
 	DurationMs    int64           `json:"durationMs"`
@@ -50,6 +67,7 @@ type DiffResponse struct {
 	Summary       json.RawMessage `json:"summary"`
 	Breaking      []Finding       `json:"breaking"`
 	Deprecations  []Deprecation   `json:"deprecations"`
+	Changes       []DiffChange    `json:"changes"`
 }
 
 type ValidateResponse struct {

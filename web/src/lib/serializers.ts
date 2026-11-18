@@ -22,6 +22,7 @@ type ComparisonWithVersions = {
   totalChangelog: number;
   totalBreaking: number;
   totalDeprecations: number;
+  totalDiffChanges: number;
   createdAt: Date;
   baseVersion: { id: string; label: string };
   targetVersion: { id: string; label: string };
@@ -34,6 +35,7 @@ export function toComparisonSummary(comparison: ComparisonWithVersions) {
     totalChangelog: comparison.totalChangelog,
     totalBreaking: comparison.totalBreaking,
     totalDeprecations: comparison.totalDeprecations,
+    totalDiffChanges: comparison.totalDiffChanges,
     createdAt: comparison.createdAt,
     baseVersion: comparison.baseVersion,
     targetVersion: comparison.targetVersion,
@@ -49,6 +51,7 @@ type ComparisonDetail = {
   totalChangelog: number;
   totalBreaking: number;
   totalDeprecations: number;
+  totalDiffChanges: number;
   summary: unknown;
   errorMessage: string | null;
   createdAt: Date;
@@ -67,6 +70,7 @@ export function toComparisonDetail(comparison: ComparisonDetail) {
     totalChangelog: comparison.totalChangelog,
     totalBreaking: comparison.totalBreaking,
     totalDeprecations: comparison.totalDeprecations,
+    totalDiffChanges: comparison.totalDiffChanges,
     summary: comparison.summary,
     errorMessage: comparison.errorMessage,
     createdAt: comparison.createdAt,
@@ -125,6 +129,46 @@ type DeprecationRow = {
   oldValuePresent: boolean;
   newValuePresent: boolean;
 };
+
+type DiffChangeRow = {
+  id: string;
+  position: number;
+  category: string;
+  changeType: string;
+  subcategory: string | null;
+  path: string | null;
+  method: string | null;
+  component: string | null;
+  field: string | null;
+  basePointer: string | null;
+  targetPointer: string | null;
+  displayPointer: string;
+  oldValue: unknown;
+  newValue: unknown;
+  oldValuePresent: boolean;
+  newValuePresent: boolean;
+};
+
+export function toDiffChange(row: DiffChangeRow) {
+  return {
+    id: row.id,
+    position: row.position,
+    category: row.category,
+    changeType: row.changeType,
+    subcategory: row.subcategory,
+    path: row.path,
+    method: row.method,
+    component: row.component,
+    field: row.field,
+    basePointer: row.basePointer,
+    targetPointer: row.targetPointer,
+    displayPointer: row.displayPointer,
+    oldValue: row.oldValue,
+    newValue: row.newValue,
+    oldValuePresent: row.oldValuePresent,
+    newValuePresent: row.newValuePresent,
+  };
+}
 
 export function toDeprecation(row: DeprecationRow) {
   return {

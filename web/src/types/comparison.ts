@@ -25,6 +25,23 @@ export const deprecationSchema = z.object({
   newValuePresent: z.boolean(),
 });
 
+export const diffChangeSchema = z.object({
+  category: z.string(),
+  changeType: z.enum(["added", "removed", "modified"]),
+  subcategory: z.string().nullable(),
+  path: z.string().nullable(),
+  method: z.string().nullable(),
+  component: z.string().nullable(),
+  field: z.string().nullable(),
+  basePointer: z.string().nullable(),
+  targetPointer: z.string().nullable(),
+  displayPointer: z.string(),
+  oldValue: z.unknown().optional(),
+  newValue: z.unknown().optional(),
+  oldValuePresent: z.boolean(),
+  newValuePresent: z.boolean(),
+});
+
 export const diffResponseSchema = z.object({
   engineVersion: z.string(),
   durationMs: z.number().int().nonnegative(),
@@ -33,8 +50,10 @@ export const diffResponseSchema = z.object({
   summary: z.record(z.string(), z.unknown()),
   breaking: z.array(findingSchema),
   deprecations: z.array(deprecationSchema),
+  changes: z.array(diffChangeSchema),
 });
 
 export type Finding = z.infer<typeof findingSchema>;
 export type Deprecation = z.infer<typeof deprecationSchema>;
+export type DiffChange = z.infer<typeof diffChangeSchema>;
 export type DiffResponse = z.infer<typeof diffResponseSchema>;

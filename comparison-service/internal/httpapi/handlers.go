@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"diffora/comparison-service/internal/deprecations"
+	"diffora/comparison-service/internal/diffchange"
 	"diffora/comparison-service/internal/model"
 	"diffora/comparison-service/internal/oasdiff"
+	"diffora/comparison-service/internal/specdoc"
 )
 
 func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
@@ -108,6 +110,19 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 	baseFile := "base." + extension(format)
 	targetFile := "target." + extension(format)
 
+	baseDoc, err := specdoc.Parse(request.Base.Content, request.Base.Format)
+	if err != nil {
+		s.logger.Error("parse base document", "error", err)
+		writeError(w, http.StatusUnprocessableEntity, "INVALID_SPEC", "The base spec could not be processed.")
+		return
+	}
+	targetDoc, err := specdoc.Parse(request.Target.Content, request.Target.Format)
+	if err != nil {
+		s.logger.Error("parse target document", "error", err)
+		writeError(w, http.StatusUnprocessableEntity, "INVALID_SPEC", "The target spec could not be processed.")
+		return
+	}
+
 	dir, cleanup, err := tempDir()
 	if err != nil {
 		s.logger.Error("temp dir", "error", err)
@@ -195,6 +210,16 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	changes := diffchange.Build(diffObject, baseDoc, targetDoc)
+	if changes == nil {
+		changes = []model.DiffChange{}
+	}
+	if len(changes) > s.cfg.MaxChanges {
+		writeError(w, http.StatusUnprocessableEntity, "TOO_MANY_CHANGES",
+			"The comparison contains too many structured changes.")
+		return
+	}
+
 	response := model.DiffResponse{
 		EngineVersion: s.engineVersion,
 		DurationMs:    durationMs,
@@ -203,6 +228,7 @@ func (s *Server) handleDiff(w http.ResponseWriter, r *http.Request) {
 		Summary:       json.RawMessage(results["summary"].Stdout),
 		Breaking:      breaking,
 		Deprecations:  deprecations.Extract(diffObject),
+		Changes:       changes,
 	}
 	writeJSON(w, http.StatusOK, response)
 }
