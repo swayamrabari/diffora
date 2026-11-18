@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -60,13 +59,10 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <Brand className="mb-6 lg:hidden" />
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to compare OpenAPI versions and review changes.
-          </CardDescription>
+          <CardTitle className="text-xl">Sign in</CardTitle>
+          <CardDescription>Enter your email and password.</CardDescription>
         </CardHeader>
 
         <CardContent>

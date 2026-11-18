@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Brand } from "@/components/layout/brand";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -55,13 +54,10 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <Brand className="mb-6 lg:hidden" />
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Upload specs, compare versions, and keep a reviewable history.
-          </CardDescription>
+          <CardTitle className="text-xl">Create account</CardTitle>
+          <CardDescription>Fill in your details to get started.</CardDescription>
         </CardHeader>
 
         <CardContent>
