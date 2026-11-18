@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { Boxes, ChevronDown, Route, Shield } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Box, ChevronDown, Route, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+} from '@/components/ui/collapsible';
 import {
   Table,
   TableBody,
@@ -15,31 +15,36 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import type { SpecOperation, SpecSchema, SpecSummary } from "@/lib/openapi-summary";
+} from '@/components/ui/table';
+import type {
+  SpecOperation,
+  SpecSchema,
+  SpecSummary,
+} from '@/lib/openapi-summary';
 
 const methodClasses: Record<string, string> = {
-  GET: "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  POST: "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  PUT: "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  PATCH: "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
-  DELETE: "border-destructive/20 bg-destructive/10 text-destructive",
+  GET: 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  POST: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+  PUT: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+  PATCH:
+    'border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  DELETE: 'border-destructive/20 bg-destructive/10 text-destructive',
 };
 
 function statusClasses(status: string): string {
-  if (status.startsWith("2")) {
-    return "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  if (status.startsWith('2')) {
+    return 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
   }
-  if (status.startsWith("3")) {
-    return "border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300";
+  if (status.startsWith('3')) {
+    return 'border-sky-500/20 bg-sky-500/10 text-sky-700 dark:text-sky-300';
   }
-  if (status.startsWith("4")) {
-    return "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  if (status.startsWith('4')) {
+    return 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300';
   }
-  if (status.startsWith("5")) {
-    return "border-destructive/20 bg-destructive/10 text-destructive";
+  if (status.startsWith('5')) {
+    return 'border-destructive/20 bg-destructive/10 text-destructive';
   }
-  return "border-border bg-muted/40 text-muted-foreground";
+  return 'border-border bg-muted/40 text-muted-foreground';
 }
 
 function ContentBadges({
@@ -69,27 +74,34 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
   return (
     <Collapsible>
       <Card size="sm" className="overflow-hidden">
-        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-muted/40">
+        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-4 py-0 text-left transition-colors">
           <Badge
             variant="outline"
-            className={methodClasses[operation.method] ?? "border-border bg-muted/40"}
+            className={
+              methodClasses[operation.method] ?? 'border-border bg-muted/40'
+            }
           >
             {operation.method}
           </Badge>
-          <span className="font-mono text-sm font-medium">{operation.path}</span>
+          <span className="font-mono text-sm font-medium">
+            {operation.path}
+          </span>
           <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-            {operation.summary ?? ""}
+            {operation.summary ?? ''}
           </span>
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            {operation.parameters.length} params · {operation.responses.length} responses
+            {operation.parameters.length} params · {operation.responses.length}{' '}
+            responses
           </span>
           <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" />
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="space-y-3 border-t border-border px-3 py-3">
+          <div className="space-y-3 border-t border-border px-3 pt-5">
             {operation.description ? (
-              <p className="text-sm text-muted-foreground">{operation.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {operation.description}
+              </p>
             ) : null}
 
             <div className="flex flex-wrap gap-2 text-xs">
@@ -126,7 +138,9 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
                     </TableHeader>
                     <TableBody>
                       {operation.parameters.map((parameter) => (
-                        <TableRow key={`${parameter.location}:${parameter.name}`}>
+                        <TableRow
+                          key={`${parameter.location}:${parameter.name}`}
+                        >
                           <TableCell className="font-medium">
                             {parameter.name}
                             {parameter.description ? (
@@ -139,11 +153,17 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
                             {parameter.location}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={parameter.required ? "secondary" : "outline"}>
-                              {parameter.required ? "required" : "optional"}
+                            <Badge
+                              variant={
+                                parameter.required ? 'secondary' : 'outline'
+                              }
+                            >
+                              {parameter.required ? 'required' : 'optional'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-xs">{parameter.type}</TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {parameter.type}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -156,8 +176,12 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-medium">Request body</h3>
-                  <Badge variant={operation.requestBody.required ? "secondary" : "outline"}>
-                    {operation.requestBody.required ? "required" : "optional"}
+                  <Badge
+                    variant={
+                      operation.requestBody.required ? 'secondary' : 'outline'
+                    }
+                  >
+                    {operation.requestBody.required ? 'required' : 'optional'}
                   </Badge>
                 </div>
                 <ContentBadges content={operation.requestBody.content} />
@@ -179,12 +203,15 @@ function OperationCard({ operation }: { operation: SpecOperation }) {
                     {operation.responses.map((response) => (
                       <TableRow key={response.status}>
                         <TableCell>
-                          <Badge variant="outline" className={statusClasses(response.status)}>
+                          <Badge
+                            variant="outline"
+                            className={statusClasses(response.status)}
+                          >
                             {response.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="max-w-xs text-muted-foreground">
-                          {response.description || "No description"}
+                          {response.description || 'No description'}
                         </TableCell>
                         <TableCell>
                           <ContentBadges content={response.content} />
@@ -206,8 +233,8 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
   return (
     <Collapsible>
       <Card size="sm" className="overflow-hidden">
-        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-muted/40">
-          <Boxes className="size-4 shrink-0 text-muted-foreground" />
+        <CollapsibleTrigger className="group flex w-full flex-wrap items-center gap-2 px-4 py-0 text-left transition-colors">
+          <Box className="size-4 shrink-0 text-muted-foreground" />
           <span className="font-mono text-sm font-medium">{schema.name}</span>
           <Badge variant="secondary" className="font-normal">
             {schema.type}
@@ -219,9 +246,11 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="space-y-3 border-t border-border px-3 py-3">
+          <div className="space-y-3 border-t border-border px-3 pt-5">
             {schema.description ? (
-              <p className="text-sm text-muted-foreground">{schema.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {schema.description}
+              </p>
             ) : null}
 
             {schema.properties.length === 0 ? (
@@ -240,18 +269,26 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
                   <TableBody>
                     {schema.properties.map((property) => (
                       <TableRow key={property.name}>
-                        <TableCell className="font-medium">{property.name}</TableCell>
-                        <TableCell className="font-mono text-xs">{property.type}</TableCell>
+                        <TableCell className="font-medium">
+                          {property.name}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {property.type}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant={property.required ? "secondary" : "outline"}>
-                            {property.required ? "required" : "optional"}
+                          <Badge
+                            variant={
+                              property.required ? 'secondary' : 'outline'
+                            }
+                          >
+                            {property.required ? 'required' : 'optional'}
                           </Badge>
                         </TableCell>
                         <TableCell className="max-w-xs text-muted-foreground">
                           {property.description ??
                             (property.values.length > 0
-                              ? property.values.join(", ")
-                              : "—")}
+                              ? property.values.join(', ')
+                              : '—')}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -269,13 +306,13 @@ function SchemaCard({ schema }: { schema: SpecSchema }) {
 export function SpecExplorer({ summary }: { summary: SpecSummary }) {
   const groups = new Map<string, SpecOperation[]>();
   for (const operation of summary.operations) {
-    const tag = operation.tags[0] ?? "Untagged";
+    const tag = operation.tags[0] ?? 'Untagged';
     const items = groups.get(tag) ?? [];
     items.push(operation);
     groups.set(tag, items);
   }
-  const groupedOperations = Array.from(groups.entries()).sort(([left], [right]) =>
-    left.localeCompare(right),
+  const groupedOperations = Array.from(groups.entries()).sort(
+    ([left], [right]) => left.localeCompare(right),
   );
 
   return (
@@ -314,7 +351,7 @@ export function SpecExplorer({ summary }: { summary: SpecSummary }) {
 
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <Boxes className="size-4 text-muted-foreground" />
+          <Box className="size-4 text-muted-foreground" />
           <h2 className="text-lg font-semibold tracking-tight">Schemas</h2>
           <Badge variant="outline">{summary.schemas.length}</Badge>
         </div>
