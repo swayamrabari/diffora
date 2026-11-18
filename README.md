@@ -16,7 +16,7 @@ The app is complete end to end:
 - Prisma 7 + Supabase PostgreSQL with `User`, `Project`, `ApiVersion`, and `Comparison`.
 - A comparison stores `totalChanges` and one JSONB `changes` array. There are no child finding tables.
 - Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
-- Project CRUD, version upload with engine validation, raw version viewer, compare dialog.
+- Project CRUD, version upload with engine validation, API guide + raw version viewer, compare dialog.
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
 - Slim app header shared across the product, and a full-width app layout on every page.
 - Full-height comparison workspace with a type sidebar and full-width change cards.
@@ -187,6 +187,17 @@ go test ./...
 6. Open `http://localhost:3000/register` and create an account.
 
 `prisma7.config.ts` loads `.env.local` for Prisma CLI commands. The runtime Prisma client uses `DATABASE_URL` through the Prisma 7 PG adapter.
+
+## Version guide
+
+Each uploaded version has a read-only API guide built from the stored spec:
+
+- Overview: servers, tags, and component counts.
+- Routes: operations grouped by tag, with parameters, request bodies, responses, content types, and security.
+- Schemas: component schemas with property types, required flags, descriptions, and enum values.
+- Security: global requirements and security schemes.
+
+Raw text remains available through **Open raw** and **Copy spec**.
 
 ## Version upload rules
 

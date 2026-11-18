@@ -164,6 +164,12 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Show only two tags per card: change type and category. Remove the subcategory and deprecated tags from the card header. Change the shared badge radius from pill to `rounded-md`, including project/version status and summary tags.
 - Consequences: Cards scan faster and keep the change-type color meaningful. Deprecated changes remain filterable and their titles still say “Marked deprecated”; they no longer add a third tag. All badges now share a softer rectangular shape.
 
+## 2026-11-18 — Read-only API guide on the version page
+
+- Context: The version page showed the raw spec in a `<pre>` block. Users could not quickly see routes, schemas, response types, or security without reading YAML.
+- Decision: Parse the stored spec server-side into a compact summary and render a read-only shadcn explorer with Overview, Routes, Schemas, and Security tabs. Keep raw/copy actions as secondary. Do not embed Swagger UI or Scalar.
+- Consequences: The version page is a documentation overview with searchable routes/schemas, method and status badges, parameter/response tables, and security schemes. Parsing is local and no raw spec is sent to the client. Unsupported or unparsable specs fall back to a message plus the raw link.
+
 ## 2026-11-18 — Sidebar theme and shadcn select filters
 
 - Context: The comparison sidebar had a “Change types” header and count pills, and its selected item used the primary solid color. Native `<select>` controls also did not match the shadcn visual system.

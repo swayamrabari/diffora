@@ -72,6 +72,7 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 - Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card, with uniform vertical padding. Only changed lines are shown.
 - The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
 - The app shell uses full available width on every page, with responsive horizontal padding.
+- The version detail page renders a read-only API guide instead of a raw spec block: Overview, Routes (grouped by tag with parameters, request bodies, responses, content types, and security), Schemas, and Security. Raw and copy actions remain available.
 - Changes whose `field` is `deprecated` are filtered out by the service and are never stored or displayed. There is no deprecated tag, filter, count, or tab.
 - There is no Breaking view, Deprecations tab, Source diff tab, or raw JSON copy action.
 

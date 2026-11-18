@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
+import { SpecExplorer } from "@/components/versions/spec-explorer";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
 import { formatBytes, formatDate } from "@/lib/format";
+import { summarizeSpec } from "@/lib/openapi-summary";
 import { findVersionForUser } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,8 @@ export default async function VersionPage({ params }: PageProps) {
   if (!version) {
     notFound();
   }
+
+  const summary = summarizeSpec(version.content);
 
   const metadata = [
     { label: "OpenAPI", value: version.openapiVersion },
@@ -99,16 +103,37 @@ export default async function VersionPage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Spec</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <pre className="max-h-[70vh] overflow-auto border-t border-border bg-muted/30 p-5 font-mono text-xs leading-6">
-              <code>{version.content}</code>
-            </pre>
-          </CardContent>
-        </Card>
+        {summary ? (
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight">API guide</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Browse routes, schemas, responses, and security requirements.
+              </p>
+            </div>
+            <SpecExplorer summary={summary} />
+          </section>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>API guide unavailable</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                The stored spec could not be summarised. You can still open or
+                copy the raw file.
+              </p>
+              <a
+                href={`/api/versions/${version.id}/raw`}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                Open raw
+              </a>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );
