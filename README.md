@@ -18,7 +18,9 @@ The app is complete end to end:
 - Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
 - Project CRUD, version upload with engine validation, raw version viewer, compare dialog.
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
-- Full-height comparison workspace: a type sidebar and full-width change cards with focused source diffs, `-`/`+` lines, and line numbers.
+- Slim app header shared across the product, plus a full-height comparison workspace with a type sidebar and full-width change cards.
+- Dashboard shows projects and totals only; recent comparisons were removed.
+- Project comparisons are cards with added/removed/modified/deprecated summaries and a **View changes** action.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.
 - Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
 - Full end-to-end test against Supabase: the reference pair stores **83 unique changes**, all with source hunks, exports all 83, and exposes no internal pointers.
@@ -201,8 +203,9 @@ With at least two versions uploaded, use **Compare** on the project page.
 - The comparison calls the Go `/diff` endpoint and stores one JSONB `changes` array.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
-- The comparison page supports export and delete.
-- The workspace fills the viewport below the header. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
+- The project page shows each comparison as a card with its summary and a **View changes** button.
+- The comparison page uses a slim header with the Diffora logo, project name, and `file 1 → file 2`.
+- The workspace fills the viewport. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
 - Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 

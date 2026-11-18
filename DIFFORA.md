@@ -64,11 +64,12 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 
 **Workspace:**
 
-- One page, no tabs, filling the viewport below the app header.
+- One page, no tabs. The comparison header is a slim app header with the Diffora logo, project name, and `file 1 → file 2`. It also holds compact export/delete actions.
 - A sidebar lists change types (Endpoints, Schemas, etc.) with counts. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
 - Filters: free text, change type, HTTP method, and a deprecated toggle.
 - Each card shows deterministic, user-friendly title and tags. Internal pointers are never displayed.
 - Each card body is a focused full-line source diff with old/new line numbers, green additions, and red removals. Only changed lines are shown.
+- The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
 - “Deprecated” is a tag and filter when `field` is `deprecated` and the new value is `true`.
 - There is no Breaking view, Deprecations tab, Source diff tab, or raw JSON copy action.
 

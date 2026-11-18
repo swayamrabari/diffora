@@ -130,3 +130,9 @@ Short ADR-style log. Each entry records a decision that affects the build.
 - Decision: Replace the tree with a sidebar that lists change types and counts. Selecting a type renders that type's changes as full-width cards, each with its own focused source diff. The header stays fixed below the app bar, and the sidebar/detail split fills the remaining viewport height with independent scrolling.
 - Consequences: The comparison page no longer scrolls past the workspace. The detail area is a card list, filters live above the cards, and the tree/group-by controls are gone. No database or API changes were required.
 
+## 2026-11-18 — Slim header and comparison cards
+
+- Context: The dashboard repeated recent comparisons, the project page used a dense table, and the comparison page had a second large header on top of the workspace. The product felt congested.
+- Decision: Use one slim app header style across the app. The dashboard keeps totals and projects only. The project page renders comparisons as cards with added/removed/modified/deprecated summaries and a **View changes** action. The comparison route hides the global top bar and owns a slim header with the Diffora logo, project, and file labels, followed only by the type sidebar and card detail area.
+- Consequences: The comparison page is a single full-viewport surface with no redundant header or summary block. The project page is easier to scan, and the dashboard no longer duplicates comparison data.
+

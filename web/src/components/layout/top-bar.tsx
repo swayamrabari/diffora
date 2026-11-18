@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Brand } from "@/components/layout/brand";
 
 type TopBarProps = {
   user: {
@@ -12,8 +13,13 @@ type TopBarProps = {
 };
 
 export function TopBar({ user }: TopBarProps) {
+  const pathname = usePathname();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  if (pathname?.startsWith("/comparisons/")) {
+    return null;
+  }
 
   async function logout() {
     setLoading(true);
@@ -26,33 +32,29 @@ export function TopBar({ user }: TopBarProps) {
   }
 
   return (
-    <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <div className="flex items-center gap-6">
+    <header className="border-b border-border bg-card">
+      <div className="mx-auto flex h-12 max-w-6xl items-center gap-6 px-4">
+        <Brand />
+
+        <nav className="flex items-center gap-4 text-sm">
           <Link
             href="/dashboard"
-            className="text-sm font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
-          >
-            Diffora
-          </Link>
-          <Link
-            href="/dashboard"
-            className="text-sm text-zinc-600 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Dashboard
           </Link>
-        </div>
+        </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="ms-auto flex items-center gap-3">
           <div className="hidden text-right sm:block">
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{user.name}</p>
-            <p className="text-xs text-zinc-500">{user.email}</p>
+            <p className="text-xs font-medium leading-4 text-foreground">{user.name}</p>
+            <p className="text-[11px] leading-4 text-muted-foreground">{user.email}</p>
           </div>
           <button
             type="button"
             onClick={logout}
             disabled={loading}
-            className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            className="h-8 rounded-md border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
           >
             {loading ? "Signing out…" : "Log out"}
           </button>
