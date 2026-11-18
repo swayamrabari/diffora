@@ -51,7 +51,7 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 ```
 
 - The service follows `$ref` to canonical component locations and deduplicates by change type plus base/target pointer.
-- Operation copies collapse onto one component change. The reference pair produces **83 unique changes**.
+- Operation copies collapse onto one component change. The reference pair produces **82 unique changes** after deprecated field changes are removed.
 - Each change carries a `source` object with one or more hunks. Each hunk contains full source lines and old/new line numbers. New hunks include only `added`/`removed` lines, with no surrounding padding; `context` remains readable for older comparisons and `gap` marks omitted large blocks.
 - JSON pointers are internal. They are used for deduplication but are omitted from the response and the database.
 - There is no changelog, summary, breaking, deprecations, or raw diff text in the contract.
@@ -67,12 +67,12 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 - One page, no tabs. The sticky app header has a fixed layout: Diffora brand, a conditional breadcrumb, and user/logout. On a comparison it shows `project / file 1 → file 2`; on a project it shows `project`; on the dashboard only brand and user remain.
 - Comparisons expose export/delete from their project card, not from the header.
 - A sidebar lists change types (Endpoints, Schemas, etc.) using the shadcn sidebar theme, with no header and no count badges. Selecting a type shows that type's changes as full-width cards in a scrollable detail area.
-- Filters: free text, change type, HTTP method, and a deprecated toggle. Dropdowns use the shadcn Select with a visible selected state.
+- Filters: free text, change type, and HTTP method. Dropdowns use the shadcn Select with a visible selected state.
 - Each card shows deterministic, user-friendly title and exactly two tags: change type and category. Change type uses green/red/violet tinted badges; the category badge is neutral. Badges are slightly rounded, not pills. Internal pointers are never displayed.
 - Each card body is a focused full-line source diff with old/new line numbers, matching line-number/icon/text colors, green additions, and destructive removals. The code block background matches the card, with uniform vertical padding. Only changed lines are shown.
 - The dashboard shows totals and projects only; recent comparisons are not repeated there. The project page shows comparison cards with change summaries and a **View changes** action.
 - The app shell uses full available width on every page, with responsive horizontal padding.
-- “Deprecated” is a tag and filter when `field` is `deprecated` and the new value is `true`.
+- Changes whose `field` is `deprecated` are filtered out by the service and are never stored or displayed. There is no deprecated tag, filter, count, or tab.
 - There is no Breaking view, Deprecations tab, Source diff tab, or raw JSON copy action.
 
 **Unchanged:**

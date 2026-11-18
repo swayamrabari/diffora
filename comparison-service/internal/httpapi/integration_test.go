@@ -96,17 +96,10 @@ func TestPinnedEngineEndToEnd(t *testing.T) {
 	if err := json.NewDecoder(deprecationResponse.Body).Decode(&deprecationDiff); err != nil {
 		t.Fatalf("decode deprecation diff: %v", err)
 	}
-	foundDeprecated := false
 	for _, change := range deprecationDiff.Changes {
-		if change.Field != nil && *change.Field == "deprecated" &&
-			change.Method != nil && *change.Method == "GET" &&
-			change.Path != nil && *change.Path == "/pets" {
-			foundDeprecated = true
-			break
+		if change.Field != nil && *change.Field == "deprecated" {
+			t.Fatalf("deprecated changes must not be returned: %#v", change)
 		}
-	}
-	if !foundDeprecated {
-		t.Fatalf("expected a deprecated change for GET /pets, got %#v", deprecationDiff.Changes)
 	}
 
 	externalBody := map[string]any{

@@ -2,6 +2,43 @@ package diffchange
 
 import "testing"
 
+func TestBuildRemovesDeprecatedChanges(t *testing.T) {
+	base := map[string]any{
+		"paths": map[string]any{
+			"/pets": map[string]any{
+				"get": map[string]any{"deprecated": false},
+			},
+		},
+	}
+	target := map[string]any{
+		"paths": map[string]any{
+			"/pets": map[string]any{
+				"get": map[string]any{"deprecated": true},
+			},
+		},
+	}
+	diff := map[string]any{
+		"paths": map[string]any{
+			"modified": map[string]any{
+				"/pets": map[string]any{
+					"operations": map[string]any{
+						"modified": map[string]any{
+							"GET": map[string]any{
+								"deprecated": map[string]any{"from": false, "to": true},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	changes := Build(diff, base, target, "", "")
+	if len(changes) != 0 {
+		t.Fatalf("expected deprecated changes to be removed, got %#v", changes)
+	}
+}
+
 func TestBuildDedupesComponentCopies(t *testing.T) {
 	base := map[string]any{
 		"paths": map[string]any{

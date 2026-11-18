@@ -22,10 +22,10 @@ The app is complete end to end:
 - Full-height comparison workspace with a type sidebar and full-width change cards.
 - Cards use exactly two tags: a color-coded change-type badge and a neutral category badge. Badges use slightly rounded corners, not pills.
 - Dashboard shows projects and totals only; recent comparisons were removed.
-- Project comparisons are cards with added/removed/modified/deprecated summaries and a **View changes** action.
-- Deprecations are a tag and filter inside the changes list, not a separate tab.
+- Project comparisons are cards with added/removed/modified summaries and a **View changes** action.
+- Deprecation is not part of the product: deprecated field changes are filtered out and are not stored.
 - Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
-- Full end-to-end test against Supabase: the reference pair stores **83 unique changes**, all with source hunks, exports all 83, and exposes no internal pointers.
+- Full end-to-end test against Supabase: the reference pair stores **82 unique changes**, all with source hunks, exports all 82, and exposes no internal pointers.
 
 ## Stack
 
@@ -211,7 +211,7 @@ With at least two versions uploaded, use **Compare** on the project page.
 - The workspace fills the viewport. A sidebar lists change types using the shadcn sidebar theme, without a header or count badges. Selecting a type shows that type's changes as full-width cards.
 - Filters use the shadcn Select component with a visible selected state.
 - Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
-- Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
+- Internal JSON pointers are never displayed. Deprecated field changes are removed before storage and are not shown.
 
 ## Next steps
 

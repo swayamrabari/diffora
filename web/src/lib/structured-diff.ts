@@ -76,7 +76,6 @@ const fieldLabels: Record<string, string> = {
   format: "Format",
   pattern: "Pattern",
   nullable: "Nullable",
-  deprecated: "Deprecation",
   readOnly: "Read only",
   writeOnly: "Write only",
   additionalProperties: "Additional properties",
@@ -118,13 +117,6 @@ function fieldLabel(field: string): string {
   return fieldLabels[segment] ?? humanize(segment);
 }
 
-export function isDeprecatedChange(change: DiffChangeItem): boolean {
-  if (change.field !== "deprecated") {
-    return false;
-  }
-  return change.newValuePresent && change.newValue === true;
-}
-
 export function changeSubject(change: DiffChangeItem): string {
   if (change.path) {
     const subject = change.method ? `${change.method} ${change.path}` : change.path;
@@ -150,10 +142,6 @@ export function changeSubject(change: DiffChangeItem): string {
 }
 
 export function changeTitle(change: DiffChangeItem): string {
-  if (change.field === "deprecated") {
-    return isDeprecatedChange(change) ? "Marked deprecated" : "Deprecation removed";
-  }
-
   if (change.category === "parameter" && change.subcategory && !change.field) {
     return `${humanize(change.subcategory)} parameter ${change.changeType}`;
   }

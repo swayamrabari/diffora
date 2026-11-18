@@ -27,7 +27,6 @@ import {
   changeTitle,
   changeTypeLabel,
   humanize,
-  isDeprecatedChange,
   type DiffChangeItem,
 } from "@/lib/structured-diff";
 import type { SourceHunk, SourceLine } from "@/types/comparison";
@@ -236,7 +235,6 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
   const category = searchParams.get("sc_category") ?? "";
   const changeType = searchParams.get("sc_type") ?? "";
   const method = searchParams.get("sc_method") ?? "";
-  const deprecatedOnly = searchParams.get("sc_deprecated") === "1";
 
   const categories = useMemo(
     () =>
@@ -266,15 +264,12 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
       if (method && change.method !== method) {
         return false;
       }
-      if (deprecatedOnly && !isDeprecatedChange(change)) {
-        return false;
-      }
       if (needle && !changeSearchText(change).includes(needle)) {
         return false;
       }
       return true;
     });
-  }, [category, changeType, changes, deprecatedOnly, method, q]);
+  }, [category, changeType, changes, method, q]);
 
   const selectedLabel = category
     ? categoryLabels[category] ?? humanize(category)
@@ -309,7 +304,6 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
       sc_q: null,
       sc_type: null,
       sc_method: null,
-      sc_deprecated: null,
     });
   }
 
@@ -387,16 +381,6 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
                 ))}
               </SelectContent>
             </Select>
-            <Button
-              type="button"
-              variant={deprecatedOnly ? "default" : "outline"}
-              className="h-8 px-3"
-              onClick={() =>
-                update({ sc_deprecated: deprecatedOnly ? null : "1" })
-              }
-            >
-              Deprecated
-            </Button>
             <Button
               type="button"
               variant="outline"

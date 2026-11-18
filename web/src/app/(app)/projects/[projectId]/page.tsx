@@ -17,8 +17,6 @@ type PageProps = { params: Promise<{ projectId: string }> };
 
 type StoredChange = {
   changeType?: string;
-  field?: string | null;
-  newValue?: unknown;
 };
 
 function summarizeChanges(value: unknown) {
@@ -26,7 +24,6 @@ function summarizeChanges(value: unknown) {
   let added = 0;
   let removed = 0;
   let modified = 0;
-  let deprecated = 0;
 
   for (const change of changes) {
     if (change.changeType === "added") {
@@ -36,12 +33,9 @@ function summarizeChanges(value: unknown) {
     } else {
       modified += 1;
     }
-    if (change.field === "deprecated" && change.newValue === true) {
-      deprecated += 1;
-    }
   }
 
-  return { added, removed, modified, deprecated };
+  return { added, removed, modified };
 }
 
 function statusClass(status: string): string {
@@ -240,11 +234,6 @@ export default async function ProjectPage({ params }: PageProps) {
                     <span className="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                       Modified {summary.modified}
                     </span>
-                    {summary.deprecated > 0 ? (
-                      <span className="rounded-md bg-violet-50 px-2 py-1 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
-                        Deprecated {summary.deprecated}
-                      </span>
-                    ) : null}
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">

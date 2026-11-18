@@ -79,6 +79,7 @@ oasdiff diff base.<yaml|json> target.<yaml|json> -f json --allow-external-refs=f
 - `source` contains one or more focused full-line diff hunks with old/new line numbers. New hunks contain only `added`/`removed` lines, with no surrounding padding; `context` remains for older comparisons and `gap` marks omitted large blocks.
 - `$ref` operation copies collapse onto their canonical component locations before deduplication.
 - JSON pointers are internal only. They are used for deduplication and source mapping but never returned.
+- Changes whose field is `deprecated` are filtered out before the response is built.
 - There is no changelog, summary, breaking, deprecation, or raw diff output.
 
 Both inputs must use the same format. Mixing YAML and JSON returns `400 FORMAT_MISMATCH`. All results are JSON.

@@ -129,7 +129,7 @@ The service returns only `engineVersion`, `durationMs`, and a deduplicated `chan
 - `changes` is the structured diff. It resolves `$ref` operation copies to canonical component pointers and assigns categories such as endpoint, operation, parameter, request, response, header, schema, security, server, metadata, and webhook.
 - Changes are deduplicated by change type plus resolved base/target pointer.
 - Pointers are internal only. They are omitted from the response and the database.
-- The reference pair produces **83 unique changes**.
+- The reference pair produces **82 unique changes** after deprecated field changes are filtered out.
 - Each change carries a focused full-line `source` hunk with old/new line numbers and only `added`/`removed` lines. No surrounding padding is emitted.
 - There is no changelog, summary, breaking, deprecation, or raw diff output.
 

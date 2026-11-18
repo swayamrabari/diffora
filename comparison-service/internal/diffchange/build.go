@@ -80,6 +80,17 @@ func Build(diff map[string]any, base, target any, baseText, targetText string) [
 						changeRank(left.ChangeType) < changeRank(right.ChangeType))))
 	})
 
+	// Deprecation is not part of the product. Drop the dedicated deprecated
+	// field changes before assigning stable IDs.
+	filtered := make([]model.DiffChange, 0, len(b.changes))
+	for _, change := range b.changes {
+		if change.Field != nil && *change.Field == "deprecated" {
+			continue
+		}
+		filtered = append(filtered, change)
+	}
+	b.changes = filtered
+
 	for index := range b.changes {
 		b.changes[index].ID = "c" + strconv.Itoa(index)
 	}
