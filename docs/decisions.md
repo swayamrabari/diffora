@@ -144,7 +144,15 @@ Short ADR-style log. Each entry records a decision that affects the build.
 
 ## 2026-11-18 — Fixed header, neutral type tags, tighter code blocks
 
+> Superseded by the next entry: code-block padding was restored to a uniform value.
+
 - Context: The header still shifted between pages and carried dashboard/export/delete actions. Colored category badges competed with change-type colors, and code blocks had container padding that made the first/last rows look detached.
 - Decision: Make the app header sticky with a fixed brand / conditional breadcrumb / user layout. Remove the Dashboard link and header actions. Move export/delete into project comparison cards. Make category and subtype tags neutral; keep only change type colored. Remove top/bottom code-block padding and apply it to the first/last diff rows instead.
 - Consequences: The header stays visually stable across dashboard, project, version, and comparison pages. Comparison actions live with the comparison card. Type tags are quieter, and diff rows own their spacing so the code block background stays continuous with the card.
+
+## 2026-11-18 — Uniform code padding and compact mono breadcrumb
+
+- Context: First/last row padding made short code blocks feel uneven, the header had more horizontal padding than needed, and breadcrumb items mixed weights and colors.
+- Decision: Restore uniform code-block vertical padding and remove the per-row first/last padding. Reduce header horizontal padding. Style the conditional breadcrumb path in a single mono size, weight, and color.
+- Consequences: Code blocks have an even vertical rhythm regardless of line count. The header is tighter, and the path reads as one consistent monospace label.
 

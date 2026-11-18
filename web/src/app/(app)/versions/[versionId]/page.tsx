@@ -38,15 +38,15 @@ export default async function VersionPage({ params }: PageProps) {
   return (
     <>
       <HeaderBreadcrumb>
-        <span className="text-muted-foreground">/</span>
+        <span>/</span>
         <Link
           href={`/projects/${version.projectId}`}
-          className="truncate text-sm text-muted-foreground hover:text-foreground"
+          className="truncate hover:text-foreground"
         >
           {version.project.name}
         </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="truncate text-sm font-medium">{version.label}</span>
+        <span>/</span>
+        <span className="truncate">{version.label}</span>
       </HeaderBreadcrumb>
 
       <div className="space-y-8">

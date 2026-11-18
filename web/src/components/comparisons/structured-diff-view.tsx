@@ -69,15 +69,7 @@ function sourceGutterTone(kind: SourceLine["kind"]): string {
   return "text-muted-foreground";
 }
 
-function SourceLineRow({
-  line,
-  first,
-  last,
-}: {
-  line: SourceLine;
-  first: boolean;
-  last: boolean;
-}) {
+function SourceLineRow({ line }: { line: SourceLine }) {
   if (line.kind === "gap") {
     return (
       <CodeBlockLine className="bg-muted/40 text-center text-xs text-muted-foreground">
@@ -90,7 +82,7 @@ function SourceLineRow({
   return (
     <CodeBlockLine
       variant={line.kind === "context" ? "default" : line.kind}
-      className={`${sourceTone(line.kind)} ${first ? "pt-3" : ""} ${last ? "pb-3" : ""}`}
+      className={sourceTone(line.kind)}
     >
       <span className="flex min-w-max items-baseline">
         <span
@@ -128,14 +120,9 @@ function SourceDiffBody({ hunks }: { hunks: SourceHunk[] }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent className="px-4 py-0 [&>code]:w-full">
+      <CodeBlockContent className="px-4 py-3 [&>code]:w-full">
         {rows.map((line, index) => (
-          <SourceLineRow
-            key={`${line.kind}-${index}`}
-            line={line}
-            first={index === 0}
-            last={index === rows.length - 1}
-          />
+          <SourceLineRow key={`${line.kind}-${index}`} line={line} />
         ))}
       </CodeBlockContent>
     </CodeBlock>
@@ -155,14 +142,12 @@ function ValueDiffBody({ change }: { change: DiffChangeItem }) {
 
   return (
     <CodeBlock className="rounded-none border-0 bg-card dark:bg-card">
-      <CodeBlockContent lineNumbers className="px-4 py-0 [&>code]:w-full">
+      <CodeBlockContent lineNumbers className="px-4 py-3 [&>code]:w-full">
         {lines.map((line, index) => (
           <CodeBlockLine
             key={`${line.kind}-${index}`}
             variant={line.kind === "context" ? "default" : line.kind}
-            className={`${sourceTone(line.kind)} ${
-              index === 0 ? "pt-3" : ""
-            } ${index === lines.length - 1 ? "pb-3" : ""}`}
+            className={sourceTone(line.kind)}
           >
             {line.text}
           </CodeBlockLine>

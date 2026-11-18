@@ -206,7 +206,7 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Results are stored immediately; reopening does not call the Go service.
 - Failed comparisons are saved and can be opened by id.
 - The project page shows each comparison as a card with its summary and a **View changes** button.
-- The app header is sticky and fixed-layout: brand on the left, conditional breadcrumb, and user/logout on the right. It shows `project / file 1 → file 2` on comparison pages.
+- The app header is sticky and fixed-layout: brand on the left, conditional mono breadcrumb, and user/logout on the right. It shows `project / file 1 → file 2` on comparison pages.
 - Export and delete live on each project comparison card, not in the comparison header.
 - The workspace fills the viewport. A sidebar lists change types; selecting a type shows that type's changes as full-width cards.
 - Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.

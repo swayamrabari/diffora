@@ -26,15 +26,15 @@ export default async function ComparisonPage({ params }: PageProps) {
   return (
     <>
       <HeaderBreadcrumb>
-        <span className="text-muted-foreground">/</span>
+        <span>/</span>
         <Link
           href={`/projects/${comparison.projectId}`}
-          className="truncate text-sm text-muted-foreground hover:text-foreground"
+          className="truncate hover:text-foreground"
         >
           {comparison.project.name}
         </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="min-w-0 truncate text-sm font-medium">
+        <span>/</span>
+        <span className="min-w-0 truncate">
           {comparison.baseVersion.label} → {comparison.targetVersion.label}
         </span>
       </HeaderBreadcrumb>

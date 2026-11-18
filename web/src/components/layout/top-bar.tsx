@@ -27,11 +27,11 @@ export function TopBar({ user }: TopBarProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card">
-      <div className="flex h-12 w-full items-center gap-3 px-4 sm:px-6 lg:px-8">
+      <div className="flex h-12 w-full items-center gap-3 px-3 sm:px-4">
         <Brand />
         <div
           id="app-header-breadcrumb"
-          className="flex min-w-0 flex-1 items-center gap-2"
+          className="flex min-w-0 flex-1 items-center gap-2 font-mono text-sm font-medium text-muted-foreground"
         />
         <div className="flex shrink-0 items-center gap-3">
           <div className="hidden text-right sm:block">

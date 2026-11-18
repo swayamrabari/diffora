@@ -81,8 +81,8 @@ export default async function ProjectPage({ params }: PageProps) {
   return (
     <>
       <HeaderBreadcrumb>
-        <span className="text-muted-foreground">/</span>
-        <span className="truncate text-sm font-medium">{project.name}</span>
+        <span>/</span>
+        <span className="truncate">{project.name}</span>
       </HeaderBreadcrumb>
 
       <div className="space-y-8">
