@@ -10,9 +10,8 @@ import (
 )
 
 const (
-	sourceContext = 3
-	maxDiffCells  = 250_000
-	maxHunkLines  = 600
+	maxDiffCells = 250_000
+	maxHunkLines = 600
 )
 
 type lineRange struct {
@@ -245,46 +244,41 @@ func buildModifiedHunks(
 	baseRange lineRange,
 	targetRange lineRange,
 ) []model.SourceHunk {
-	baseFrom := max(0, baseRange.start-1-sourceContext)
-	baseTo := min(len(baseLines), baseRange.end+sourceContext)
-	targetFrom := max(0, targetRange.start-1-sourceContext)
-	targetTo := min(len(targetLines), targetRange.end+sourceContext)
+	baseFrom := max(0, baseRange.start-1)
+	baseTo := min(len(baseLines), baseRange.end)
+	targetFrom := max(0, targetRange.start-1)
+	targetTo := min(len(targetLines), targetRange.end)
 
-	if baseFrom >= baseTo || targetFrom >= targetTo {
+	if baseFrom >= baseTo && targetFrom >= targetTo {
 		return nil
 	}
 
-	lines, ok := diffSourceLines(
-		baseLines[baseFrom:baseTo],
-		targetLines[targetFrom:targetTo],
-		baseFrom+1,
-		targetFrom+1,
-	)
+	baseBlock := baseLines[baseFrom:baseTo]
+	targetBlock := targetLines[targetFrom:targetTo]
+
+	lines, ok := diffSourceLines(baseBlock, targetBlock, baseFrom+1, targetFrom+1)
 	if !ok {
-		return nil
+		lines = make([]model.SourceLine, 0, len(baseBlock)+len(targetBlock))
+		for index, text := range baseBlock {
+			lines = append(lines, makeSourceLine("removed", baseFrom+index+1, 0, text))
+		}
+		for index, text := range targetBlock {
+			lines = append(lines, makeSourceLine("added", 0, targetFrom+index+1, text))
+		}
 	}
-	return groupSourceHunks(lines)
+	return groupChangedSourceHunks(lines)
 }
 
 func buildOneSidedHunk(lines []string, valueRange lineRange, added bool) model.SourceHunk {
-	from := max(0, valueRange.start-1-sourceContext)
-	to := min(len(lines), valueRange.end+sourceContext)
-	out := make([]model.SourceLine, 0, to-from)
+	from := max(1, valueRange.start)
+	to := min(len(lines), valueRange.end)
+	out := make([]model.SourceLine, 0, max(0, to-from+1))
 
-	for index := from; index < to; index++ {
-		lineNumber := index + 1
-		kind := "context"
-		if lineNumber >= valueRange.start && lineNumber <= valueRange.end {
-			if added {
-				kind = "added"
-			} else {
-				kind = "removed"
-			}
-		}
+	for lineNumber := from; lineNumber <= to; lineNumber++ {
 		if added {
-			out = append(out, makeSourceLine(kind, 0, lineNumber, lines[index]))
+			out = append(out, makeSourceLine("added", 0, lineNumber, lines[lineNumber-1]))
 		} else {
-			out = append(out, makeSourceLine(kind, lineNumber, 0, lines[index]))
+			out = append(out, makeSourceLine("removed", lineNumber, 0, lines[lineNumber-1]))
 		}
 	}
 
@@ -351,37 +345,29 @@ func diffSourceLines(
 	return out, true
 }
 
-func groupSourceHunks(lines []model.SourceLine) []model.SourceHunk {
-	changed := make([]int, 0, len(lines))
-	for index, line := range lines {
-		if line.Kind == "added" || line.Kind == "removed" {
-			changed = append(changed, index)
-		}
-	}
-	if len(changed) == 0 {
-		return nil
-	}
+func groupChangedSourceHunks(lines []model.SourceLine) []model.SourceHunk {
+	hunks := make([]model.SourceHunk, 0)
+	current := make([]model.SourceLine, 0)
+	sawContext := false
 
-	hunks := make([]model.SourceHunk, 0, len(changed))
-	start := changed[0]
-	end := changed[0]
-	for _, index := range changed[1:] {
-		if index-end-1 > sourceContext*2 {
-			hunks = append(hunks, buildHunkWindow(lines, start, end))
-			start = index
+	for _, line := range lines {
+		if line.Kind != "added" && line.Kind != "removed" {
+			if len(current) > 0 {
+				sawContext = true
+			}
+			continue
 		}
-		end = index
+		if sawContext && len(current) > 0 {
+			hunks = append(hunks, model.SourceHunk{Lines: capSourceLines(current)})
+			current = nil
+			sawContext = false
+		}
+		current = append(current, line)
 	}
-	hunks = append(hunks, buildHunkWindow(lines, start, end))
+	if len(current) > 0 {
+		hunks = append(hunks, model.SourceHunk{Lines: capSourceLines(current)})
+	}
 	return hunks
-}
-
-func buildHunkWindow(lines []model.SourceLine, firstChanged, lastChanged int) model.SourceHunk {
-	from := max(0, firstChanged-sourceContext)
-	to := min(len(lines), lastChanged+1+sourceContext)
-	window := make([]model.SourceLine, to-from)
-	copy(window, lines[from:to])
-	return model.SourceHunk{Lines: capSourceLines(window)}
 }
 
 func capSourceLines(lines []model.SourceLine) []model.SourceLine {

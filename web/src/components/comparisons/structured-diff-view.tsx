@@ -195,7 +195,7 @@ function SourceDiffView({ hunks }: { hunks: SourceHunk[] }) {
       <CodeBlockHeader>
         <CodeBlockTitle>Source diff</CodeBlockTitle>
         <span className="ms-auto text-xs text-muted-foreground">
-          {changed} changed {changed === 1 ? "line" : "lines"} · 3 lines of context
+          {changed} changed {changed === 1 ? "line" : "lines"}
         </span>
       </CodeBlockHeader>
       {rows.length === 0 ? (

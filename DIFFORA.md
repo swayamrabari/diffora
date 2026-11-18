@@ -52,7 +52,7 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 
 - The service follows `$ref` to canonical component locations and deduplicates by change type plus base/target pointer.
 - Operation copies collapse onto one component change. The reference pair produces **83 unique changes**.
-- Each change carries a `source` object with one or more hunks. Each hunk contains full source lines, old/new line numbers, 3 lines of context above and below, and `context`/`added`/`removed`/`gap` kinds.
+- Each change carries a `source` object with one or more hunks. Each hunk contains full source lines and old/new line numbers. New hunks include only `added`/`removed` lines, with no surrounding padding; `context` remains readable for older comparisons and `gap` marks omitted large blocks.
 - JSON pointers are internal. They are used for deduplication but are omitted from the response and the database.
 - There is no changelog, summary, breaking, deprecations, or raw diff text in the contract.
 
@@ -68,7 +68,7 @@ There is no `changelog`, `summary`, or `breaking` call. One comparison is one `d
 - A collapsible summary shows change counts by change type and category.
 - Filters: free text, API type, change type, HTTP method, grouping by type/endpoint, and a deprecated toggle.
 - Each change shows deterministic, user-friendly title and tags. Internal pointers are never displayed.
-- The detail view is a full-line source diff with old/new line numbers, 3 lines of context above and below, green additions, and red removals.
+- The detail view is a focused full-line source diff with old/new line numbers, green additions, and red removals. Only changed lines are shown.
 - “Deprecated” is a tag and filter when `field` is `deprecated` and the new value is `true`.
 - There is no Breaking view, Deprecations tab, Source diff tab, or raw JSON copy action.
 

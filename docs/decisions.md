@@ -112,7 +112,15 @@ Short ADR-style log. Each entry records a decision that affects the build.
 
 ## 2026-11-18 — Full-line source hunks
 
+> Superseded by the next entry: context padding was removed.
+
 - Context: The value diff showed only the changed scalar (for example `80 → 120`), but users need to see the complete line and its surrounding spec context.
 - Decision: Map each change's resolved base/target pointer to a position-aware YAML/JSON node, then attach a `source` diff with full lines, old/new line numbers, and 3 context lines above and below. Modified blocks are line-diffed, so unchanged lines stay as context. Pure additions/removals use the full node range.
 - Consequences: Every change for the reference pair now has source hunks. While adding this, array-index and category bugs in required/enum/tag/security/header pointers were fixed, surfacing 15 real changes that were previously collapsed; the reference pair now reports 83 unique changes. Large hunks are capped at 600 lines with a gap marker. Old comparisons without source hunks fall back to the value diff.
+
+## 2026-11-18 — Focused hunks without padding
+
+- Context: Diffing a 3-line window around each change highlighted neighboring changes as if they belonged to the selected change, and nearby changes could consume the padding. It also made simple scalar changes noisy.
+- Decision: Use only the exact base/target node range for each change. Added/removed blocks show every line; modified blocks are line-diffed inside the exact range and emit only `removed`/`added` lines. No surrounding context is emitted. Separated changed regions become separate hunks.
+- Consequences: Each sidebar entry now shows exactly one change with no unrelated highlights and no missing padding. The line numbers still locate the change. Older comparisons with context rows continue to render, but new comparisons produce only changed lines.
 

@@ -20,7 +20,7 @@ The app is complete end to end:
 - Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
 - Single-page comparison workspace: collapsible summary, filters, grouped change tree, and a unified before/after diff with `-`/`+` lines and line numbers.
 - Deprecations are a tag and filter inside the changes list, not a separate tab.
-- Each change includes a full-line source hunk with 3 lines of context above and below, GitHub-style green additions and red removals, and old/new line numbers.
+- Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
 - Full end-to-end test against Supabase: the reference pair stores **83 unique changes**, all with source hunks, exports all 83, and exposes no internal pointers.
 
 ## Stack
@@ -203,7 +203,7 @@ With at least two versions uploaded, use **Compare** on the project page.
 - Failed comparisons are saved and can be opened by id.
 - The comparison page supports export and delete.
 - The workspace has no tabs. It shows a collapsible summary, filters, grouped changes, and a full-line source diff for the selected change.
-- The diff shows complete source lines with old/new line numbers, 3 context lines above and below, green additions, and red removals.
+- The diff shows complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
 - Deprecated changes are tagged and can be filtered; internal JSON pointers are never displayed.
 
 ## Next steps
