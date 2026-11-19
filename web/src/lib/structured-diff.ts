@@ -1,3 +1,7 @@
+// Turns the stored change rows into what the user sees: friendly titles and
+// subjects, category labels, searchable text, and before/after value diffs
+// (a small line-based LCS diff, same idea as Git).
+
 import type { SourceDiff } from "@/types/comparison";
 
 export type DiffChangeItem = {

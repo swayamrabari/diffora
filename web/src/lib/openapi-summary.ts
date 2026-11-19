@@ -1,3 +1,8 @@
+// Parses a stored OpenAPI spec into the read-only "API guide" shown on the
+// version page: endpoints grouped by tag, their parameters/request bodies/
+// responses, and component schemas. Purely for display; validation lives in
+// the Go service.
+
 import { parse } from "yaml";
 
 type Dict = Record<string, unknown>;

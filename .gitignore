@@ -33,13 +33,6 @@ comparison-service/*.test
 
 # Local tools and downloaded binaries
 tools/
-docs/day1/bin/
-
-# Local comparison test output
-test-diff-response.json
-test-diff-response*.json
-test-base.yaml
-test-target.yaml
 
 # OS / editor
 .DS_Store

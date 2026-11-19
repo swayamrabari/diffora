@@ -1,3 +1,5 @@
+// Small display helpers for dates and file sizes.
+
 const dateFormat = new Intl.DateTimeFormat("en", {
   dateStyle: "medium",
   timeZone: "UTC",

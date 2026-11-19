@@ -1,3 +1,6 @@
+// Validates every required environment variable once (on first use) and
+// fails fast with a clear error if something is missing or malformed.
+
 import "server-only";
 import { z } from "zod";
 

@@ -1,8 +1,8 @@
 # Comparison service
 
-Stateless Go HTTP service that runs the pinned oasdiff binary. It never touches the database. It writes the uploaded YAML/JSON as-is and passes it to oasdiff; there is no converter or metadata layer.
+A small, stateless Go HTTP service that runs the pinned **oasdiff 1.38.0** binary. It never touches the database. It writes the uploaded YAML/JSON to a temp directory as-is and passes it to oasdiff; there is no converter or metadata layer.
 
-## Run
+## Run locally
 
 ```powershell
 $env:SHARED_SECRET = "local-secret"
@@ -19,11 +19,7 @@ go run ./cmd/server
 | POST | `/validate` | `X-Shared-Secret` | Validate one YAML/JSON spec |
 | POST | `/diff` | `X-Shared-Secret` | Return one deduplicated `changes` array |
 
-`POST /validate` body:
-
-```json
-{ "content": "openapi: 3.0.3\n...", "format": "yaml" }
-```
+`POST /validate` body: `{ "content": "openapi: 3.0.3\n...", "format": "yaml" }`
 
 `POST /diff` body:
 
@@ -34,13 +30,7 @@ go run ./cmd/server
 }
 ```
 
-`POST /diff` runs exactly one engine command:
-
-```text
-oasdiff diff base.<yaml|json> target.<yaml|json> -f json --allow-external-refs=false
-```
-
-`POST /diff` response:
+`POST /diff` runs exactly one engine command and returns:
 
 ```json
 {
@@ -75,41 +65,30 @@ oasdiff diff base.<yaml|json> target.<yaml|json> -f json --allow-external-refs=f
 }
 ```
 
-- `changes` is the deduplicated, user-facing diff. Each item has a stable `id`, category, change type, optional path/method/component/field, and old/new values with presence flags.
-- `source` contains one or more focused full-line diff hunks with old/new line numbers. New hunks contain only `added`/`removed` lines, with no surrounding padding; `context` remains for older comparisons and `gap` marks omitted large blocks.
-- `$ref` operation copies collapse onto their canonical component locations before deduplication.
-- JSON pointers are internal only. They are used for deduplication and source mapping but never returned.
-- Changes whose field is `deprecated` are filtered out before the response is built.
-- There is no changelog, summary, breaking, deprecation, or raw diff output.
+Notes:
 
-Both inputs must use the same format. Mixing YAML and JSON returns `400 FORMAT_MISMATCH`. All results are JSON.
+- Each change has a stable `id`, a category, a change type, and old/new values with presence flags.
+- `source` holds focused full-line hunks with old/new line numbers — only the changed lines, no padding. `gap` marks omitted blocks in very large hunks.
+- `$ref` operation copies collapse onto their canonical component location before deduplication.
+- Changes whose field is `deprecated` are filtered out before the response is built.
+- Both inputs must use the same format; mixing YAML and JSON returns `400 FORMAT_MISMATCH`.
 
 ## Tests
 
 ```powershell
-$env:OASDIFF_BIN = (Resolve-Path ..\tools\oasdiff\v1.38.0\oasdiff.exe).Path
 go test ./...
 ```
 
-Without `OASDIFF_BIN`, the real-engine integration test is skipped; the unit and HTTP contract tests still run.
+Set `OASDIFF_BIN` to also run the real-engine integration test; without it, the integration test is skipped and the unit/HTTP tests still run.
 
 ## Deployment
 
-The service ships as a Docker image. `fly.toml` is ready for Fly.io:
-
-```powershell
-# set `app` and `primary_region` in fly.toml first
-fly apps create <your-app-name>
-fly secrets set SHARED_SECRET="<shared secret>"
-fly deploy
-```
-
-`SHARED_SECRET` must match `COMPARISON_SHARED_SECRET` in the web app. Keep one machine warm (`auto_stop_machines = "off"`) so comparisons do not pay a cold start. Cloud Run and Render/Railway instructions are in [`../DEPLOYMENT.md`](../DEPLOYMENT.md).
+Deploy on a plain Linux host (the app runs it on EC2): install the oasdiff binary, set the env vars from `.env.example`, and run the binary behind an HTTPS reverse proxy. `SHARED_SECRET` must match `COMPARISON_SHARED_SECRET` in the web app. See the root [README](../README.md#comparison-service--ec2) for a walkthrough.
 
 ## Safety
 
 - Fixed oasdiff arguments, no shell, no user text in arguments.
-- `--allow-external-refs=false`; external refs are rejected by the engine and mapped to `EXTERNAL_REF_NOT_SUPPORTED`.
-- Temp directories are mode `0700`; files are `0600` and removed with `defer`.
-- Output caps, request caps, timeouts, panic recovery, and graceful shutdown.
-- Validation findings are sanitized before they are returned.
+- `--allow-external-refs=false`; specs with external refs are rejected and mapped to `EXTERNAL_REF_NOT_SUPPORTED`.
+- Temp directories are mode `0700`, files are `0600`, removed with `defer`.
+- Request/output caps, timeouts, panic recovery, and graceful shutdown.
+- Validation findings are sanitized (no file paths, fingerprints, or severity words) before they are returned.

@@ -1,3 +1,6 @@
+// One shared Prisma client for the whole app. Stored on globalThis so hot
+// reloads in development do not open a new database connection every time.
+
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";

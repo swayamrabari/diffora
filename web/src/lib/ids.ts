@@ -1,3 +1,6 @@
+// UUID check used before database queries, so a malformed id simply becomes
+// a "not found" instead of a database error.
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

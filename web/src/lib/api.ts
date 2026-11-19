@@ -1,3 +1,6 @@
+// Shared helpers for the JSON API routes: error/success responses, request
+// checks, and safe body parsing.
+
 import { NextResponse } from "next/server";
 import { getEnv } from "@/lib/env";
 

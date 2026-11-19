@@ -1,3 +1,6 @@
+// Request and response shapes shared by the HTTP handlers and the engine
+// packages. Pointers are json:"-" on purpose: they are internal only.
+
 package model
 
 import "encoding/json"

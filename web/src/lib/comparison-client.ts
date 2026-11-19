@@ -1,3 +1,6 @@
+// Server-side HTTP client for the Go comparison service. Every call sends
+// the shared secret and turns engine/timeout failures into one typed error.
+
 import "server-only";
 import { getEnv } from "@/lib/env";
 import {

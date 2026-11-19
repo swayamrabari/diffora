@@ -1,3 +1,6 @@
+// The HTTP layer: routes, shared-secret auth, logging/recovery middleware,
+// and JSON decoding/writing helpers.
+
 package httpapi
 
 import (

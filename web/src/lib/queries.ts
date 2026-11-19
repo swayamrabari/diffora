@@ -1,3 +1,7 @@
+// Server-side database lookups for pages and API routes. Every lookup is
+// scoped to the signed-in user, so someone else's record simply reads as
+// "not found".
+
 import "server-only";
 import { getDb } from "@/lib/db";
 import { isUuid } from "@/lib/ids";

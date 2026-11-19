@@ -1,3 +1,5 @@
+// Turns database rows into the plain JSON shapes returned by the API routes.
+
 import type { ApiVersion } from "@/generated/prisma/client";
 
 export function toVersionSummary(version: ApiVersion) {

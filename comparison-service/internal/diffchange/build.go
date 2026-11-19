@@ -981,7 +981,7 @@ func resolve(root any, segments []string, depth int) (any, []string, bool) {
 	current := root
 	pointer := make([]string, 0, len(segments))
 
-	for index, segment := range segments {
+	for _, segment := range segments {
 		for refDepth := 0; refDepth < 8; refDepth++ {
 			currentMap, ok := asMap(current)
 			if !ok {
@@ -1018,7 +1018,6 @@ func resolve(root any, segments []string, depth int) (any, []string, bool) {
 		default:
 			return nil, nil, false
 		}
-		_ = index
 	}
 	return current, pointer, true
 }

@@ -1,3 +1,7 @@
+// The shape of one comparison "change" as produced by the Go service and
+// stored on the Comparison row. The Zod schemas validate the service response
+// before it is saved.
+
 import { z } from "zod";
 
 export const sourceLineSchema = z.object({

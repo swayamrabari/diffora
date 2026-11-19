@@ -1,76 +1,56 @@
 # Diffora
 
-Diffora compares two versions of an OpenAPI specification and shows what changed. It reports changes; it does not judge whether they are safe or breaking.
+Diffora compares two versions of an OpenAPI specification and shows exactly what changed. It reports the changes — it does not judge whether they are safe or breaking.
 
-The full build specification is in [`DIFFORA.md`](./DIFFORA.md). Engine findings are in [`docs/notes.md`](./docs/notes.md), and build decisions are in [`docs/decisions.md`](./docs/decisions.md).
+```text
+Browser ──► Next.js web app (Vercel)
+              │
+              ├──► Supabase PostgreSQL (users, projects, versions, comparisons)
+              │
+              └──► Go comparison service (EC2) ──► oasdiff (pinned v1.38.0)
+```
 
-## Status
-
-The app is complete end to end:
-
-- Go HTTP service with `/health`, `/validate`, and `/diff`, pinned to oasdiff **1.38.0** with verified checksums.
-- `/diff` runs exactly one `oasdiff diff` command and returns one deduplicated `changes` array.
-- Uploaded YAML/JSON is passed to oasdiff as-is; there is no YAML converter or metadata layer.
-- Both compared versions must use the same format; mixing YAML and JSON returns `400 FORMAT_MISMATCH`.
-- Shared-secret auth, body limits, timeouts, output caps, panic recovery, and graceful shutdown.
-- Prisma 7 + Supabase PostgreSQL with `User`, `Project`, `ApiVersion`, and `Comparison`.
-- A comparison stores `totalChanges` and one JSONB `changes` array. There are no child finding tables.
-- Register/login/logout/me API routes with bcrypt and JWT cookies, Next 16 `proxy.ts` protection.
-- Project CRUD, version upload with engine validation, API guide + raw version viewer, compare dialog.
-- Comparison read API, JSON export, and delete; failed comparisons are stored and reopenable.
-- Slim app header shared across the product, and a full-width app layout on every page.
-- Full-height comparison workspace with a type sidebar and full-width change cards.
-- Cards use exactly two tags: a color-coded change-type badge and a neutral category badge. Badges use slightly rounded corners, not pills.
-- Dashboard shows projects and totals only; recent comparisons were removed.
-- Project comparisons are cards with added/removed/modified summaries and a **View changes** action.
-- Deprecation is not part of the product: deprecated field changes are filtered out and are not stored.
-- Each change includes a focused full-line source hunk showing only the changed lines, GitHub-style green additions and red removals, and old/new line numbers.
-- Full end-to-end test against Supabase: the reference pair stores **82 unique changes**, all with source hunks, exports all 82, and exposes no internal pointers.
-
-## Deployment
-
-Production runs the web app on **Vercel**, the comparison service as a **Docker container** (Fly.io recommended, Cloud Run supported), and Postgres on **Supabase**. Full instructions, environment variables, limits, and the pre-deploy checklist are in [`DEPLOYMENT.md`](./DEPLOYMENT.md).
-
-## Stack
-
-- Next.js 16.4.6, React 19.3.0, TypeScript
-- Tailwind CSS 4, shadcn/ui
-- Prisma + Supabase PostgreSQL
-- Go comparison service running oasdiff
-- Docker image for the Go service (Fly.io or Cloud Run)
+- **Web app** (`web/`): Next.js 16 + React 19 + Tailwind CSS 4 + shadcn/ui, Prisma 7, email/password login with JWT cookies.
+- **Comparison service** (`comparison-service/`): small Go HTTP service that runs the [oasdiff](https://github.com/oasdiff/oasdiff) binary with fixed, safe arguments and returns one deduplicated `changes` array.
+- **Database**: Supabase PostgreSQL. A comparison is stored once; reopening it never calls the Go service again.
 
 ## Repository layout
 
 ```text
 Diffora/
-├── DIFFORA.md
-├── README.md
-├── docs/
-│   ├── notes.md
-│   ├── decisions.md
-│   └── day1/                       # seed specs, scratch outputs, fixture generator
-├── comparison-service/             # Go service, Dockerfile, fixtures, tests
-│   ├── go.mod
-│   ├── testdata/pairs/             # 31 fixture pairs
-│   └── ...
-└── web/
-    ├── src/app/                    # Next.js App Router
-    ├── prisma/                     # schema and migrations
-    ├── .env.example
-    └── next.config.ts
+├── README.md                     # you are here
+├── comparison-service/          # Go service (deploy on EC2)
+│   ├── cmd/server/               #   entrypoint
+│   ├── internal/
+│   │   ├── config/               #   reads env vars
+│   │   ├── httpapi/              #   routes, auth, handlers
+│   │   ├── oasdiff/              #   runs the engine binary safely
+│   │   ├── diffchange/           #   raw engine output → typed changes
+│   │   ├── specdoc/              #   YAML/JSON parsing for pointers
+│   │   └── model/                #   request/response structs
+│   ├── testdata/pairs/           #   fixture pairs used by the tests
+│   └── go.mod
+└── web/                          # Next.js app (deploy on Vercel)
+    ├── prisma/                   #   schema + migrations
+    └── src/
+        ├── app/                  #   pages (app router) + api/ routes
+        ├── components/           #   UI components
+        ├── lib/                  #   auth, db, helpers
+        └── proxy.ts              #   cookie check before pages load
 ```
 
 ## Prerequisites
 
-- Node.js 22 LTS and npm
-- Go 1.27.x
-- Docker (optional, to build the comparison-service image)
-- A Supabase project (local development and production)
-- oasdiff **1.38.0**
+- Node.js 22 and npm
+- Go 1.27
+- A [Supabase](https://supabase.com) project (free tier works)
+- The **oasdiff 1.38.0** binary (next section)
 
-## Pin and verify oasdiff
+## Setup
 
-The local binary is not committed. Download the release for your platform and verify it against the published checksums:
+### 1. Install oasdiff (once)
+
+The service calls the `oasdiff` binary. Download release **1.38.0** for your platform from <https://github.com/oasdiff/oasdiff/releases/tag/v1.38.0> and verify it against the published `checksums.txt`. On Windows PowerShell:
 
 ```powershell
 $version = "1.38.0"
@@ -83,159 +63,127 @@ Get-FileHash "$dir/oasdiff_${version}_windows_amd64.tar.gz" -Algorithm SHA256
 tar -xzf "$dir/oasdiff_${version}_windows_amd64.tar.gz" -C $dir
 ```
 
-Expected Windows amd64 SHA-256:
+On Linux, use the `oasdiff_1.38.0_linux_amd64.tar.gz` asset instead and extract `oasdiff` to somewhere on your `PATH` (e.g. `/usr/local/bin`).
 
-```text
-4509a5d838849ab39c759b6ed95a0b9193b80a69e55b88c6c9e72d7bde21bbcf
-```
-
-Set `OASDIFF_BIN` to the extracted binary when running the service locally. The Go Dockerfile will download and verify the Linux binary in Phase 6.
-
-## Validate the fixtures
-
-```powershell
-node docs/day1/generate-fixtures.mjs
-$o = (Resolve-Path .\tools\oasdiff\v1.38.0\oasdiff.exe).Path
-& $o validate .\comparison-service\testdata\pairs\property-added\base.yaml -f json --allow-external-refs=false
-& $o validate .\comparison-service\testdata\pairs\property-added\target.yaml -f json --allow-external-refs=false
-& $o diff .\comparison-service\testdata\pairs\property-added\base.yaml .\comparison-service\testdata\pairs\property-added\target.yaml -f json --allow-external-refs=false
-```
-
-Expected error fixtures:
-
-- `external-ref` — exit `123` because external refs are disabled.
-- `invalid-target` — exit `102` because the target does not load.
-
-## Environment files
-
-Copy the examples when the relevant phase needs them:
+### 2. Copy the environment files
 
 ```powershell
 Copy-Item web/.env.example web/.env.local
 Copy-Item comparison-service/.env.example comparison-service/.env
 ```
 
-Do not commit `.env` files. Use real secrets and real Supabase connection strings.
+Fill `web/.env.local` (Supabase gives you both URLs under *Project Settings → Database → Connection string*):
 
-## Running the comparison service locally
+```dotenv
+DATABASE_URL=postgresql://...pooler...:6543/postgres?sslmode=require   # runtime (pooled)
+DIRECT_URL=postgresql://...direct...:5432/postgres?sslmode=require     # migrations only
+JWT_SECRET=at-least-32-random-bytes
+COOKIE_SECURE=false                    # true in production (HTTPS)
+APP_ORIGIN=http://localhost:3000
+COMPARISON_SERVICE_URL=http://localhost:8080
+COMPARISON_SHARED_SECRET=test-secret
+```
+
+In `comparison-service/.env`, set `SHARED_SECRET=test-secret` (it must match `COMPARISON_SHARED_SECRET`) and point `OASDIFF_BIN` at the binary you downloaded.
+
+### 3. Apply the database migrations
+
+```powershell
+cd web
+npm install
+npm run db:deploy        # applies prisma/migrations with DIRECT_URL
+```
+
+### 4. Run the comparison service
 
 ```powershell
 cd comparison-service
-$env:SHARED_SECRET = "local-secret"
-$env:OASDIFF_BIN = (Resolve-Path ..\tools\oasdiff\v1.38.0\oasdiff.exe).Path
+$env:SHARED_SECRET = "test-secret"
+$env:OASDIFF_BIN = (Resolve-Path ..\tools\oasdiff\v1.38.0\oasdiff.exe).Path   # Windows
 $env:PORT = "8080"
 go run ./cmd/server
 ```
 
-Check it:
+Check it: `Invoke-RestMethod http://127.0.0.1:8080/health`
+
+### 5. Run the web app
 
 ```powershell
-Invoke-RestMethod http://127.0.0.1:8080/health
+cd web
+npm run dev
 ```
 
-The service tests include a real-engine integration test when `OASDIFF_BIN` is set:
+Open <http://localhost:3000/register>, create an account, then create a project, upload two spec versions, and hit **Compare**.
+
+## How the app fits together
+
+| Concept | Where | What happens |
+|---|---|---|
+| Sign in | `src/lib/auth.ts` | bcrypt password check, then a signed JWT in an HttpOnly cookie |
+| Upload a version | `api/projects/[projectId]/versions` | The file is parsed, sent to the Go service's `/validate`, and stored as-is |
+| Run a comparison | `api/projects/[projectId]/comparisons` | Both stored specs go to the Go service's `/diff`; the returned `changes` array is saved as one JSON column |
+| View a comparison | `app/(app)/comparisons/[comparisonId]` | Reads only the database. Sidebar lists change types; each card shows the exact changed source lines |
+
+Upload rules: `.yaml`/`.yml`/`.json`, up to 2 MB, valid UTF-8, OpenAPI 3.0.x or 3.1.x. Both compared versions must use the same format. Changes to a `deprecated` field are filtered out by the service and never stored.
+
+## Useful commands
+
+Web (run inside `web/`):
+
+```text
+npm run dev          start the dev server
+npm run build        production build
+npm run lint         eslint
+npm run typecheck    tsc --noEmit
+npm run db:deploy    apply migrations
+npm run db:migrate   create a new migration from schema.prisma changes
+npm run db:studio    browse the database
+```
+
+Comparison service (run inside `comparison-service/`):
 
 ```powershell
+go vet ./...
+go test ./...
+# optional: real-engine integration test
 $env:OASDIFF_BIN = (Resolve-Path ..\tools\oasdiff\v1.38.0\oasdiff.exe).Path
 go test ./...
 ```
 
-## Supabase setup
+## Deployment
 
-1. Copy the web environment file:
+### Web app → Vercel
 
-   ```powershell
-   Copy-Item web\.env.example web\.env.local
-   ```
+1. Import the repository, set the **Root Directory** to `web` (Node 22).
+2. Add the environment variables from `web/.env.example` under *Settings → Environment Variables* — with production values: `COOKIE_SECURE=true`, `APP_ORIGIN=https://your-domain.com`, `COMPARISON_SERVICE_URL=https://your-ec2-host`.
+3. Deploy. Run migrations with `npm run db:deploy` from your machine beforehand, not from the build.
 
-2. Fill `web\.env.local`:
+### Comparison service → EC2
+
+The service is stateless, so an EC2 setup is just "binary + systemd":
+
+1. Launch a small Linux instance, install the oasdiff 1.38.0 binary (e.g. to `/usr/local/bin/oasdiff`) and a Go toolchain (or build `server` locally with `GOOS=linux go build ./cmd/server` and upload it).
+2. Create `/etc/diffora.env`:
 
    ```dotenv
-   DATABASE_URL=postgresql://...pooler...:6543/postgres?sslmode=require
-   DIRECT_URL=postgresql://...direct-or-session-pooler...:5432/postgres?sslmode=require
-   JWT_SECRET=at-least-32-random-bytes
-   COOKIE_SECURE=false
-   APP_ORIGIN=http://localhost:3000
-   COMPARISON_SERVICE_URL=http://localhost:8080
-   COMPARISON_SHARED_SECRET=test-secret
+   PORT=8080
+   SHARED_SECRET=<the same value as COMPARISON_SHARED_SECRET on Vercel>
+   OASDIFF_BIN=/usr/local/bin/oasdiff
    ```
 
-   Use the Supabase **pooled** URL for `DATABASE_URL` (runtime) and the **direct** or **session pooler** URL for `DIRECT_URL` (migrations).
+3. Run it under systemd with an HTTPS reverse proxy (nginx/Caddy) in front, or use an ALB. Keep the port private; the `X-Shared-Secret` header is the real gate.
 
-3. Apply the initial migration:
+4. Smoke test: `curl https://your-ec2-host/health` should return `{"status":"ok","engineVersion":"1.38.0"}`.
 
-   ```powershell
-   cd web
-   npm run db:deploy
-   ```
+### After both are live
 
-4. Start the comparison service in another terminal:
-
-   ```powershell
-   cd comparison-service
-   $env:SHARED_SECRET = "test-secret"
-   $env:OASDIFF_BIN = (Resolve-Path ..\tools\oasdiff\v1.38.0\oasdiff.exe).Path
-   $env:PORT = "8080"
-   go run ./cmd/server
-   ```
-
-   `COMPARISON_SHARED_SECRET` in `web/.env.local` must match `SHARED_SECRET`.
-
-5. Start the web app:
-
-   ```powershell
-   cd web
-   npm run dev
-   ```
-
-6. Open `http://localhost:3000/register` and create an account.
-
-`prisma7.config.ts` loads `.env.local` for Prisma CLI commands. The runtime Prisma client uses `DATABASE_URL` through the Prisma 7 PG adapter.
-
-## Version guide
-
-Each uploaded version has a read-only API guide built from the stored spec:
-
-- A compact metadata strip: original file, format, OpenAPI version, and upload date.
-- Collapsible endpoints grouped by tag, with parameters, request bodies, responses, content types, and security.
-- Collapsible schemas with property types, required flags, descriptions, and enum values.
-
-Raw text remains available through **Open raw** and **Copy spec**.
-
-## Version upload rules
-
-- Accepted files: `.yaml`, `.yml`, `.json`.
-- Maximum file size: 2 MB.
-- The file must be valid UTF-8 and OpenAPI 3.0.x or 3.1.x.
-- The comparison service must be running; the upload calls `/validate`.
-- Version labels are unique per project, case-insensitive.
-- The original text is stored unchanged.
-
-## Comparisons
-
-With at least two versions uploaded, use **Compare** on the project page.
-
-- Both versions must use the same format (YAML/YAML or JSON/JSON).
-- The comparison calls the Go `/diff` endpoint and stores one JSONB `changes` array.
-- Results are stored immediately; reopening does not call the Go service.
-- Failed comparisons are saved and can be opened by id.
-- The project page shows each comparison as a card with its summary and a **View changes** button.
-- The app header is sticky and fixed-layout: brand on the left, conditional mono breadcrumb, and user/logout on the right. It shows `project / file 1 → file 2` on comparison pages.
-- Export and delete live on each project comparison card, not in the comparison header.
-- The workspace fills the viewport. A sidebar lists change types using the shadcn sidebar theme, without a header or count badges. Selecting a type shows that type's changes as full-width cards.
-- Filters use the shadcn Select component with a visible selected state.
-- Each card shows the complete changed source lines with old/new line numbers, green additions, and red removals. No surrounding padding is added.
-- Internal JSON pointers are never displayed. Deprecated field changes are removed before storage and are not shown.
-
-## Next steps
-
-1. Deploy the web app and comparison service with [`DEPLOYMENT.md`](./DEPLOYMENT.md).
-2. Add an uptime monitor for `/api/health` and the Go `/health`.
-3. Optional hardening: CSP, rate limiting on auth routes, and storage-backed uploads if specs grow past 2 MB.
+1. `https://your-domain.com/api/health` → `{"status":"ok","database":"ok"}`
+2. Register, create a project, upload two specs, compare, export.
+3. If **Compare** returns `502`, Vercel cannot reach the service (check the URL). If it returns `401`, the two shared secrets differ.
 
 ## Security notes
 
-- oasdiff runs with `--allow-external-refs=false`.
-- The comparison service uses a shared secret and is not published in Compose.
-- The session cookie is HttpOnly, SameSite=Lax, and `Secure` only when `COOKIE_SECURE=true`.
-- Spec content, cookies, secrets, and emails must never be logged.
+- oasdiff always runs with `--allow-external-refs=false`; specs with external refs are rejected.
+- The comparison service is protected by a shared secret and never touches the database.
+- The session cookie is HttpOnly + SameSite=Lax; `Secure` when `COOKIE_SECURE=true`.
+- Spec content, secrets, and emails are never logged.

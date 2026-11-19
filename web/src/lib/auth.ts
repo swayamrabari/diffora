@@ -1,3 +1,7 @@
+// Session authentication: bcrypt password hashing plus a signed JWT stored in
+// an HttpOnly cookie. getCurrentUser() is the single way pages and routes read
+// the signed-in user.
+
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";

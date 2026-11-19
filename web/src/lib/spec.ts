@@ -1,3 +1,7 @@
+// Reads an uploaded OpenAPI file and extracts what the app needs to store:
+// its format (yaml/json), the OpenAPI version, and a display title. Rejects
+// empty files, null bytes, and anything that is not OpenAPI 3.0.x or 3.1.x.
+
 import { parse as parseYaml } from "yaml";
 
 export type SpecFormat = "yaml" | "json";
