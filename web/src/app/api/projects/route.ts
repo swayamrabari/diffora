@@ -11,33 +11,6 @@ const createSchema = z.object({
   description: z.string().trim().max(500).optional(),
 });
 
-export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) {
-    return errorResponse(401, "UNAUTHORIZED", "You are not signed in.");
-  }
-
-  const projects = await getDb().project.findMany({
-    where: { userId: user.id },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      _count: { select: { versions: true, comparisons: true } },
-    },
-  });
-
-  return ok({
-    projects: projects.map((project) => ({
-      id: project.id,
-      name: project.name,
-      description: project.description,
-      createdAt: project.createdAt,
-      updatedAt: project.updatedAt,
-      versionCount: project._count.versions,
-      comparisonCount: project._count.comparisons,
-    })),
-  });
-}
-
 export async function POST(request: Request) {
   if (!isJsonRequest(request)) {
     return errorResponse(415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type must be application/json.");

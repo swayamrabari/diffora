@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/utils";
 import { summarizeSpec } from "@/lib/openapi-summary";
 import { findVersionForUser } from "@/lib/queries";
 

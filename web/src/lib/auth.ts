@@ -1,14 +1,9 @@
-// Session authentication: bcrypt password hashing plus a signed JWT stored in
-// an HttpOnly cookie. getCurrentUser() is the single way pages and routes read
-// the signed-in user.
-
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { compare, hash } from "bcryptjs";
 import { getDb } from "@/lib/db";
-import { getEnv } from "@/lib/env";
 
 export const SESSION_COOKIE = "diffora_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
@@ -16,14 +11,18 @@ const ISSUER = "diffora";
 const AUDIENCE = "diffora-web";
 
 function secret(): Uint8Array {
-  return new TextEncoder().encode(getEnv().JWT_SECRET);
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error("JWT_SECRET is not set");
+  }
+  return new TextEncoder().encode(jwtSecret);
 }
 
 function cookieOptions() {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: getEnv().COOKIE_SECURE,
+    secure: process.env.COOKIE_SECURE === "true",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   };
@@ -31,10 +30,6 @@ function cookieOptions() {
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
-}
-
-export function passwordByteLength(password: string): number {
-  return Buffer.byteLength(password, "utf8");
 }
 
 export function hashPassword(password: string): Promise<string> {

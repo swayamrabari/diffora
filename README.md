@@ -152,34 +152,209 @@ go test ./...
 
 ## Deployment
 
-### Web app → Vercel
+Production layout:
 
-1. Import the repository, set the **Root Directory** to `web` (Node 22).
-2. Add the environment variables from `web/.env.example` under *Settings → Environment Variables* — with production values: `COOKIE_SECURE=true`, `APP_ORIGIN=https://your-domain.com`, `COMPARISON_SERVICE_URL=https://your-ec2-host`.
-3. Deploy. Run migrations with `npm run db:deploy` from your machine beforehand, not from the build.
+```text
+Browser ──HTTPS──► Vercel (Next.js)
+                      │
+                      ├──► Supabase PostgreSQL (pooled connection)
+                      │
+                      └──HTTPS──► EC2 (Go service + oasdiff, TLS via Caddy)
+```
 
-### Comparison service → EC2
+Before you start you need: a Supabase project, a Vercel account, an EC2 instance
+(Ubuntu 22.04/24.04; `t3.micro` is enough for small specs), an Elastic IP, and a
+domain or subdomain for the API (e.g. `api.yourdomain.com`).
 
-The service is stateless, so an EC2 setup is just "binary + systemd":
+### Step 1 — Database (Supabase)
 
-1. Launch a small Linux instance, install the oasdiff 1.38.0 binary (e.g. to `/usr/local/bin/oasdiff`) and a Go toolchain (or build `server` locally with `GOOS=linux go build ./cmd/server` and upload it).
-2. Create `/etc/diffora.env`:
+1. Create the project and open **Project Settings → Database → Connection string**.
+2. Copy both URLs:
+   - **Pooled** (transaction mode, port 6543) → `DATABASE_URL`, used at runtime.
+   - **Direct** or **session pooler** (port 5432) → `DIRECT_URL`, used by migrations only.
+3. Apply the migrations from your machine (not from the Vercel build):
 
-   ```dotenv
-   PORT=8080
-   SHARED_SECRET=<the same value as COMPARISON_SHARED_SECRET on Vercel>
-   OASDIFF_BIN=/usr/local/bin/oasdiff
+   ```powershell
+   cd web
+   Copy-Item .env.example .env.local
+   # paste both Supabase URLs into .env.local
+   npm ci
+   npm run db:deploy
+   npx prisma migrate status
    ```
 
-3. Run it under systemd with an HTTPS reverse proxy (nginx/Caddy) in front, or use an ALB. Keep the port private; the `X-Shared-Secret` header is the real gate.
+   Re-run `npm run db:deploy` after any new migration; it is safe to repeat.
 
-4. Smoke test: `curl https://your-ec2-host/health` should return `{"status":"ok","engineVersion":"1.38.0"}`.
+### Step 2 — Comparison service (EC2)
 
-### After both are live
+1. **Launch the instance** (Ubuntu 22.04/24.04). Allocate an **Elastic IP** and
+   associate it, so the address survives restarts.
+2. **Security group** inbound rules: SSH (22) from your IP, HTTP (80) and HTTPS
+   (443) from anywhere. Do **not** open 8080 — Caddy proxies to it locally.
+3. **Install oasdiff 1.38.0** on the instance:
 
-1. `https://your-domain.com/api/health` → `{"status":"ok","database":"ok"}`
-2. Register, create a project, upload two specs, compare, export.
-3. If **Compare** returns `502`, Vercel cannot reach the service (check the URL). If it returns `401`, the two shared secrets differ.
+   ```bash
+   cd /tmp
+   curl -fsSLO https://github.com/oasdiff/oasdiff/releases/download/v1.38.0/oasdiff_1.38.0_linux_amd64.tar.gz
+   sha256sum oasdiff_1.38.0_linux_amd64.tar.gz
+   # expect 613037fd6a1d3362a1b742d6d86c338c0eb5ab3511f4942ce3948e78720ea2da
+   tar -xzf oasdiff_1.38.0_linux_amd64.tar.gz
+   sudo install -m 0755 oasdiff /usr/local/bin/oasdiff
+   oasdiff --version   # oasdiff version 1.38.0
+   ```
+
+4. **Build and copy the service binary** (from your machine):
+
+   ```powershell
+   cd comparison-service
+   $env:GOOS = "linux"; $env:GOARCH = "amd64"
+   go build -o diffora-comparison ./cmd/server
+   scp ./diffora-comparison ubuntu@<elastic-ip>:/tmp/
+   ```
+
+   (You can also install Go on the instance and run `go build ./cmd/server` there.)
+
+5. **Create a service user and install the binary** (on the instance):
+
+   ```bash
+   sudo useradd --system --home /opt/diffora --shell /usr/sbin/nologin diffora
+   sudo mkdir -p /opt/diffora
+   sudo install -o diffora -g diffora -m 0755 /tmp/diffora-comparison /opt/diffora/comparison-service
+   ```
+
+6. **Create the environment file** (generate the secret with
+   `openssl rand -hex 32`; it must match `COMPARISON_SHARED_SECRET` on Vercel):
+
+   ```bash
+   sudo tee /etc/diffora.env >/dev/null <<'EOF'
+   PORT=8080
+   SHARED_SECRET=replace-with-a-long-random-secret
+   OASDIFF_BIN=/usr/local/bin/oasdiff
+   VALIDATE_TIMEOUT_SECONDS=20
+   DIFF_TIMEOUT_SECONDS=60
+   MAX_REQUEST_BYTES=20971520
+   MAX_ENGINE_STDOUT_BYTES=33554432
+   MAX_CHANGES=5000
+   EOF
+   sudo chmod 600 /etc/diffora.env
+   ```
+
+7. **Run it under systemd**:
+
+   ```bash
+   sudo tee /etc/systemd/system/diffora-comparison.service >/dev/null <<'EOF'
+   [Unit]
+   Description=Diffora comparison service
+   After=network-online.target
+   Wants=network-online.target
+
+   [Service]
+   Type=simple
+   User=diffora
+   Group=diffora
+   EnvironmentFile=/etc/diffora.env
+   ExecStart=/opt/diffora/comparison-service
+   Restart=on-failure
+   RestartSec=2
+   NoNewPrivileges=true
+   PrivateTmp=true
+
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now diffora-comparison
+   systemctl status diffora-comparison --no-pager
+   curl http://127.0.0.1:8080/health   # {"status":"ok","engineVersion":"1.38.0"}
+   ```
+
+8. **Add HTTPS with Caddy** (automatic Let's Encrypt certificate). Point an
+   **A record** for `api.yourdomain.com` at the Elastic IP first, then:
+
+   ```bash
+   sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+   sudo apt update && sudo apt install -y caddy
+
+   sudo tee /etc/caddy/Caddyfile >/dev/null <<'EOF'
+   api.yourdomain.com {
+       reverse_proxy 127.0.0.1:8080
+   }
+   EOF
+   sudo systemctl reload caddy
+   ```
+
+9. **Verify**:
+
+   ```bash
+   curl https://api.yourdomain.com/health
+   # → {"status":"ok","engineVersion":"1.38.0"}
+   curl -i -X POST https://api.yourdomain.com/validate -H "Content-Type: application/json" -d '{}'
+   # → HTTP 401 without the shared secret
+   ```
+
+10. **Enable the firewall**:
+
+    ```bash
+    sudo ufw allow OpenSSH
+    sudo ufw allow 80,443/tcp
+    sudo ufw enable
+    ```
+
+### Step 3 — Web app (Vercel)
+
+1. Vercel → **Add New → Project** → import the repository.
+2. **Root Directory:** `web`. Framework: Next.js (auto-detected). Node: 22
+   (pinned in `package.json`).
+3. Add these under **Settings → Environment Variables** (Production):
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | Supabase pooled URL (port 6543) |
+   | `DATABASE_POOL_MAX` | `5` |
+   | `JWT_SECRET` | `openssl rand -hex 32` |
+   | `COOKIE_SECURE` | `true` |
+   | `APP_ORIGIN` | `https://your-domain.com` |
+   | `COMPARISON_SERVICE_URL` | `https://api.yourdomain.com` |
+   | `COMPARISON_SHARED_SECRET` | same value as the EC2 `SHARED_SECRET` |
+   | `COMPARISON_TIMEOUT_MS` | `50000` on Hobby, `90000` on Pro |
+   | `MAX_UPLOAD_REQUEST_BYTES` | `4194304` |
+   | `MAX_SPEC_BYTES` | `2097152` |
+   | `MAX_CHANGES_PER_COMPARISON` | `5000` |
+
+4. **Deploy.** Add your domain under **Settings → Domains**, then set
+   `APP_ORIGIN` to the final HTTPS origin and redeploy.
+5. `https://your-domain.com/api/health` → `{"status":"ok","database":"ok"}`.
+
+`web/vercel.json` adds the security headers (nosniff, frame protection,
+referrer policy, HSTS) at the platform level.
+
+### Step 4 — Smoke test
+
+1. Register an account, create a project.
+2. Upload two spec versions (`.yaml`/`.yml`/`.json`, ≤ 2 MB each).
+3. Run a comparison and open the workspace.
+4. Reload the comparison — it should open without calling the Go service.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `502` on compare | Vercel cannot reach the service | Check `COMPARISON_SERVICE_URL`, then `curl https://api.yourdomain.com/health` |
+| `401` from the service | Shared secrets differ | Use the same value in Vercel and `/etc/diffora.env`, restart both |
+| `504` / function timeout | Diff longer than the plan allows | Pro plan (300s) or lower `COMPARISON_TIMEOUT_MS` |
+| Login works but the session drops | `COOKIE_SECURE=true` over HTTP | Use HTTPS, or `false` for local only |
+| `P1001` / DB timeout | Wrong Supabase URL or port | Runtime 6543 pooled, migrations 5432 direct |
+
+### Step 5 — Operations
+
+- **Service logs:** `journalctl -u diffora-comparison -f`
+- **Restart:** `sudo systemctl restart diffora-comparison`
+- **Update the service:** rebuild, `scp` the binary, `sudo install` it, restart.
+- **Web:** redeploy from Vercel, after running migrations from your machine.
+- **Rotate secrets:** update `JWT_SECRET` (invalidates sessions) or the shared
+  secret on both sides, then redeploy/restart both.
+- **Uptime:** monitor `/api/health` (web) and `/health` (service).
 
 ## Security notes
 

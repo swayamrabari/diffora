@@ -6,10 +6,9 @@ import {
   ComparisonServiceError,
   diffSpecs,
 } from "@/lib/comparison-client";
-import { toStoredChanges } from "@/lib/comparison-store";
 import { getDb } from "@/lib/db";
-import { getEnv } from "@/lib/env";
 import { findProjectForUser } from "@/lib/queries";
+import type { DiffChange } from "@/types/comparison";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,6 +73,25 @@ async function createFailedComparison(
       errorMessage: code,
     },
   });
+}
+
+// Drop internal fields before storing the changes array.
+function toStoredChanges(changes: DiffChange[]) {
+  return changes.map((change) => ({
+    id: change.id,
+    category: change.category,
+    changeType: change.changeType,
+    subcategory: change.subcategory,
+    path: change.path,
+    method: change.method,
+    component: change.component,
+    field: change.field,
+    ...(change.oldValuePresent ? { oldValue: change.oldValue } : {}),
+    ...(change.newValuePresent ? { newValue: change.newValue } : {}),
+    oldValuePresent: change.oldValuePresent,
+    newValuePresent: change.newValuePresent,
+    ...(change.source ? { source: change.source } : {}),
+  }));
 }
 
 export async function POST(request: Request, context: RouteContext) {
@@ -175,8 +193,8 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const env = getEnv();
-  if (diff.changes.length > env.MAX_CHANGES_PER_COMPARISON) {
+  const maxChanges = Number(process.env.MAX_CHANGES_PER_COMPARISON ?? 5_000);
+  if (diff.changes.length > maxChanges) {
     const failed = await createFailedComparison(
       project.id,
       base,

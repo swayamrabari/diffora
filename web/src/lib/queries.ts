@@ -1,10 +1,12 @@
-// Server-side database lookups for pages and API routes. Every lookup is
-// scoped to the signed-in user, so someone else's record simply reads as
-// "not found".
-
 import "server-only";
 import { getDb } from "@/lib/db";
-import { isUuid } from "@/lib/ids";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
 
 export async function findProjectForUser(userId: string, projectId: string) {
   if (!isUuid(projectId)) {

@@ -49,6 +49,19 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
     formatMismatch ||
     loading;
 
+  const baseOptions = versions
+    .filter((version) => version.id !== targetVersionId)
+    .map((version) => ({
+      value: version.id,
+      label: `${version.label} (${version.specFormat})`,
+    }));
+  const targetOptions = versions
+    .filter((version) => version.id !== baseVersionId)
+    .map((version) => ({
+      value: version.id,
+      label: `${version.label} (${version.specFormat})`,
+    }));
+
   function openDialog() {
     setBaseVersionId("");
     setTargetVersionId("");
@@ -140,24 +153,17 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
               onValueChange={(value) =>
                 setBaseVersionId(value ? String(value) : "")
               }
-              items={versions
-                .filter((version) => version.id !== targetVersionId)
-                .map((version) => ({
-                  value: version.id,
-                  label: `${version.label} (${version.specFormat})`,
-                }))}
+              items={baseOptions}
             >
               <SelectTrigger id="base-version" className="mt-1 w-full">
                 <SelectValue placeholder="Choose a version" />
               </SelectTrigger>
               <SelectContent align="start">
-                {versions
-                  .filter((version) => version.id !== targetVersionId)
-                  .map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      {version.label} ({version.specFormat})
-                    </SelectItem>
-                  ))}
+                {baseOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -171,24 +177,17 @@ export function CompareDialog({ projectId, versions }: CompareDialogProps) {
               onValueChange={(value) =>
                 setTargetVersionId(value ? String(value) : "")
               }
-              items={versions
-                .filter((version) => version.id !== baseVersionId)
-                .map((version) => ({
-                  value: version.id,
-                  label: `${version.label} (${version.specFormat})`,
-                }))}
+              items={targetOptions}
             >
               <SelectTrigger id="target-version" className="mt-1 w-full">
                 <SelectValue placeholder="Choose a version" />
               </SelectTrigger>
               <SelectContent align="start">
-                {versions
-                  .filter((version) => version.id !== baseVersionId)
-                  .map((version) => (
-                    <SelectItem key={version.id} value={version.id}>
-                      {version.label} ({version.specFormat})
-                    </SelectItem>
-                  ))}
+                {targetOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

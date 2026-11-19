@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

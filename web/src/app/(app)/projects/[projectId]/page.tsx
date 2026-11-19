@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { formatBytes, formatDate } from "@/lib/format";
+import { formatBytes, formatDate } from "@/lib/utils";
 import { findProjectForUser } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -235,12 +235,6 @@ export default async function ProjectPage({ params }: PageProps) {
                     </CardContent>
 
                     <CardFooter className="justify-end gap-2 border-t">
-                      <a
-                        href={`/api/comparisons/${comparison.id}/export`}
-                        className={buttonVariants({ variant: "outline", size: "sm" })}
-                      >
-                        Export
-                      </a>
                       <DeleteComparisonButton
                         comparisonId={comparison.id}
                         projectId={project.id}

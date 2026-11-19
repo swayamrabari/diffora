@@ -1,10 +1,6 @@
-// One shared Prisma client for the whole app. Stored on globalThis so hot
-// reloads in development do not open a new database connection every time.
-
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import { getEnv } from "@/lib/env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
@@ -12,10 +8,14 @@ const globalForPrisma = globalThis as unknown as {
 
 export function getDb(): PrismaClient {
   if (!globalForPrisma.prisma) {
-    const env = getEnv();
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error("DATABASE_URL is not set");
+    }
+
     const adapter = new PrismaPg({
-      connectionString: env.DATABASE_URL,
-      max: env.DATABASE_POOL_MAX,
+      connectionString,
+      max: Number(process.env.DATABASE_POOL_MAX ?? 5),
       connectionTimeoutMillis: 10_000,
       idleTimeoutMillis: 10_000,
     });

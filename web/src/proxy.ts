@@ -1,7 +1,3 @@
-// Runs before every page request. It only checks the session cookie's
-// signature and expiry (no database) and redirects signed-out visitors to
-// /login. The pages and API routes still do the real auth checks.
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";

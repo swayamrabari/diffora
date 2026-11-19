@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { CircleAlertIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { CircleAlertIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -12,16 +12,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
 
 export function RegisterForm() {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,24 +31,24 @@ export function RegisterForm() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
       });
-      const data = (await response.json().catch(() => null)) as
-        | { error?: { message?: string } }
-        | null;
+      const data = (await response.json().catch(() => null)) as {
+        error?: { message?: string };
+      } | null;
 
       if (!response.ok) {
-        setError(data?.error?.message ?? "Could not create the account.");
+        setError(data?.error?.message ?? 'Could not create the account.');
         return;
       }
 
-      router.replace("/dashboard");
+      router.replace('/dashboard');
       router.refresh();
     } catch {
-      setError("Could not reach the server. Try again.");
+      setError('Could not reach the server. Try again.');
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export function RegisterForm() {
               id="name"
               type="text"
               autoComplete="name"
-              placeholder="Ada Lovelace"
+              placeholder="Your Name"
               autoFocus
               required
               maxLength={100}
@@ -117,7 +117,9 @@ export function RegisterForm() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <p className="text-xs text-muted-foreground">At least 8 characters.</p>
+            <p className="text-xs text-muted-foreground">
+              At least 8 characters.
+            </p>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
@@ -127,7 +129,7 @@ export function RegisterForm() {
                 Creating account…
               </>
             ) : (
-              "Create account"
+              'Create account'
             )}
           </Button>
         </form>

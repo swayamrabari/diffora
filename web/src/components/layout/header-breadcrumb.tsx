@@ -1,5 +1,6 @@
 "use client";
 
+// Renders the page's breadcrumb into the TopBar's placeholder after hydration.
 import { createPortal } from "react-dom";
 import { useSyncExternalStore, type ReactNode } from "react";
 

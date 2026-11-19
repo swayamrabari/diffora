@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { errorResponse, isJsonRequest, isSameOrigin, ok, readJson } from "@/lib/api";
-import { createSession, hashPassword, normalizeEmail, passwordByteLength } from "@/lib/auth";
+import { createSession, hashPassword, normalizeEmail } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -28,7 +28,8 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return errorResponse(400, "BAD_REQUEST", "Name, email, and a password of 8–72 characters are required.");
   }
-  if (passwordByteLength(parsed.data.password) > 72) {
+  // bcrypt truncates passwords at 72 bytes.
+  if (Buffer.byteLength(parsed.data.password) > 72) {
     return errorResponse(400, "BAD_REQUEST", "Password must be at most 72 bytes.");
   }
 

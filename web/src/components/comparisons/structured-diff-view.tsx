@@ -268,8 +268,6 @@ type Filters = {
 
 const PAGE_SIZE = 30;
 
-// Every HTTP method OpenAPI allows, in conventional order. The filter always
-// lists all of them, not just the ones present in a given comparison.
 const HTTP_METHODS = [
   "GET",
   "POST",
@@ -361,8 +359,6 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     { value: "modified", label: "Modified" },
   ];
   const methodItems = useMemo(() => {
-    // Any non-standard method found in the data keeps working: it is listed
-    // after the eight standard ones.
     const extras = methods.filter((method) => !HTTP_METHODS.includes(method));
     return [
       { value: "all", label: "All methods" },

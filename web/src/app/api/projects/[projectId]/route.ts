@@ -3,7 +3,6 @@ import { errorResponse, isJsonRequest, isSameOrigin, ok, readJson } from "@/lib/
 import { getCurrentUser } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { findProjectForUser } from "@/lib/queries";
-import { toComparisonSummary, toVersionSummary } from "@/lib/serializers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,40 +17,6 @@ const updateSchema = z
   });
 
 type RouteContext = { params: Promise<{ projectId: string }> };
-
-export async function GET(_request: Request, context: RouteContext) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return errorResponse(401, "UNAUTHORIZED", "You are not signed in.");
-  }
-
-  const { projectId } = await context.params;
-  const project = await findProjectForUser(user.id, projectId);
-  if (!project) {
-    return errorResponse(404, "NOT_FOUND", "Project not found.");
-  }
-
-  const [versions, comparisons] = await Promise.all([
-    getDb().apiVersion.findMany({
-      where: { projectId: project.id },
-      orderBy: { createdAt: "asc" },
-    }),
-    getDb().comparison.findMany({
-      where: { projectId: project.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        baseVersion: { select: { id: true, label: true } },
-        targetVersion: { select: { id: true, label: true } },
-      },
-    }),
-  ]);
-
-  return ok({
-    project,
-    versions: versions.map(toVersionSummary),
-    comparisons: comparisons.map(toComparisonSummary),
-  });
-}
 
 export async function PATCH(request: Request, context: RouteContext) {
   if (!isJsonRequest(request)) {

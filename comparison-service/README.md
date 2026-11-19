@@ -83,7 +83,9 @@ Set `OASDIFF_BIN` to also run the real-engine integration test; without it, the 
 
 ## Deployment
 
-Deploy on a plain Linux host (the app runs it on EC2): install the oasdiff binary, set the env vars from `.env.example`, and run the binary behind an HTTPS reverse proxy. `SHARED_SECRET` must match `COMPARISON_SHARED_SECRET` in the web app. See the root [README](../README.md#comparison-service--ec2) for a walkthrough.
+Deploy on a plain Linux host (the app runs it on EC2): install the oasdiff binary, set the env vars from `.env.example`, run the binary under systemd, and put Caddy (or any HTTPS reverse proxy) in front. `SHARED_SECRET` must match `COMPARISON_SHARED_SECRET` in the web app.
+
+The root [README](../README.md#step-2--comparison-service-ec2) has the full step-by-step walkthrough, including the systemd unit and Caddyfile.
 
 ## Safety
 

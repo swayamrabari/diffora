@@ -1,7 +1,3 @@
-// Reads an uploaded OpenAPI file and extracts what the app needs to store:
-// its format (yaml/json), the OpenAPI version, and a display title. Rejects
-// empty files, null bytes, and anything that is not OpenAPI 3.0.x or 3.1.x.
-
 import { parse as parseYaml } from "yaml";
 
 export type SpecFormat = "yaml" | "json";
@@ -52,13 +48,12 @@ export function parseSpec(content: string, filename: string): ParsedSpec {
     throw new SpecError("INVALID_SPEC", "The spec must be a JSON/YAML object.");
   }
 
-  const rawOpenapi = value.openapi;
-  const openapi =
-    typeof rawOpenapi === "string"
-      ? rawOpenapi.trim()
-      : typeof rawOpenapi === "number"
-        ? String(rawOpenapi)
-        : "";
+  let openapi = "";
+  if (typeof value.openapi === "string") {
+    openapi = value.openapi.trim();
+  } else if (typeof value.openapi === "number") {
+    openapi = String(value.openapi);
+  }
 
   if (!/^3\.(0|1)(\.\d+)?$/.test(openapi)) {
     throw new SpecError(

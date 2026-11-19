@@ -6,9 +6,7 @@ import {
   validateSpec,
 } from "@/lib/comparison-client";
 import { getDb } from "@/lib/db";
-import { getEnv } from "@/lib/env";
 import { findProjectForUser } from "@/lib/queries";
-import { toVersionSummary } from "@/lib/serializers";
 import { parseSpec, SpecError } from "@/lib/spec";
 
 export const runtime = "nodejs";
@@ -40,9 +38,11 @@ export async function POST(request: Request, context: RouteContext) {
     return errorResponse(404, "NOT_FOUND", "Project not found.");
   }
 
-  const env = getEnv();
   const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > env.MAX_UPLOAD_REQUEST_BYTES) {
+  if (
+    Number.isFinite(contentLength) &&
+    contentLength > Number(process.env.MAX_UPLOAD_REQUEST_BYTES ?? 4 * 1024 * 1024)
+  ) {
     return errorResponse(413, "PAYLOAD_TOO_LARGE", "The upload request is too large.");
   }
 
@@ -75,7 +75,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (file.size <= 0) {
     return errorResponse(422, "INVALID_SPEC", "The spec is empty.");
   }
-  if (file.size > env.MAX_SPEC_BYTES) {
+  if (file.size > Number(process.env.MAX_SPEC_BYTES ?? 2 * 1024 * 1024)) {
     return errorResponse(413, "FILE_TOO_LARGE", "The spec file is too large.");
   }
 
@@ -143,7 +143,25 @@ export async function POST(request: Request, context: RouteContext) {
       return version;
     });
 
-    return ok({ version: toVersionSummary(created) }, 201);
+    // Omit the large spec content from the response.
+    return ok(
+      {
+        version: {
+          id: created.id,
+          projectId: created.projectId,
+          label: created.label,
+          description: created.description,
+          openapiVersion: created.openapiVersion,
+          specFormat: created.specFormat,
+          originalFilename: created.originalFilename,
+          fileSize: created.fileSize,
+          checksum: created.checksum,
+          title: created.title,
+          createdAt: created.createdAt,
+        },
+      },
+      201,
+    );
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {
       return errorResponse(409, "DUPLICATE_LABEL", "A version with this label already exists.");
