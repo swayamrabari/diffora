@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { CompareDialog } from "@/components/comparisons/compare-dialog";
 import { DeleteComparisonButton } from "@/components/comparisons/delete-comparison-button";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
@@ -195,8 +196,10 @@ export default async function ProjectPage({ params }: PageProps) {
                   <Card key={comparison.id} size="sm">
                     <CardHeader>
                       <CardTitle className="flex flex-wrap items-center gap-2">
-                        <span className="min-w-0 truncate">
-                          {comparison.baseVersion.label} → {comparison.targetVersion.label}
+                        <span className="flex min-w-0 items-center gap-1">
+                          <span className="truncate">{comparison.baseVersion.label}</span>
+                          <ArrowRight aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="truncate">{comparison.targetVersion.label}</span>
                         </span>
                         <Badge
                           variant={

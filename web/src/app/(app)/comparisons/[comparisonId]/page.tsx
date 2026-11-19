@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { ComparisonWorkspace } from "@/components/comparisons/comparison-workspace";
 import { HeaderBreadcrumb } from "@/components/layout/header-breadcrumb";
 import { Spinner } from "@/components/ui/spinner";
@@ -35,8 +36,10 @@ export default async function ComparisonPage({ params }: PageProps) {
           {comparison.project.name}
         </Link>
         <span>/</span>
-        <span className="min-w-0 truncate">
-          {comparison.baseVersion.label} → {comparison.targetVersion.label}
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="truncate">{comparison.baseVersion.label}</span>
+          <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="truncate">{comparison.targetVersion.label}</span>
         </span>
       </HeaderBreadcrumb>
 

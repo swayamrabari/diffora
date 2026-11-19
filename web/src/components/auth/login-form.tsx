@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { CircleAlertIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 
 export function LoginForm() {
   const router = useRouter();
@@ -58,64 +60,76 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-sm">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Sign in</CardTitle>
-          <CardDescription>Enter your email and password.</CardDescription>
-        </CardHeader>
+    <Card className="w-full max-w-sm">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl font-semibold tracking-tight">
+          Welcome back
+        </CardTitle>
+        <CardDescription>
+          Enter your email and password to continue.
+        </CardDescription>
+      </CardHeader>
 
-        <CardContent>
-          <form className="space-y-5" onSubmit={onSubmit}>
-            {error ? (
-              <p
-                role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                {error}
-              </p>
-            ) : null}
+      <CardContent>
+        <form className="space-y-4" onSubmit={onSubmit}>
+          {error ? (
+            <p
+              role="alert"
+              className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              <CircleAlertIcon aria-hidden="true" className="size-4 shrink-0" />
+              <span>{error}</span>
+            </p>
+          ) : null}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              autoFocus
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
-        </CardContent>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? (
+              <>
+                <Spinner />
+                Signing in…
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
+        </form>
+      </CardContent>
 
-        <CardFooter className="border-t text-sm text-muted-foreground">
-          No account?{" "}
-          <Link
-            href="/register"
-            className="font-medium text-foreground underline underline-offset-4"
-          >
-            Create one
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
+      <CardFooter className="justify-center gap-1 border-t text-sm text-muted-foreground">
+        No account?
+        <Link
+          href="/register"
+          className="font-medium text-foreground underline underline-offset-4"
+        >
+          Create one
+        </Link>
+      </CardFooter>
+    </Card>
   );
 }

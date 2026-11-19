@@ -3,15 +3,15 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { memo, useDeferredValue, useMemo, useRef, useState } from "react";
 import {
-  ArrowDownLeftIcon,
-  ArrowUpRightIcon,
   BoxIcon,
   CircleIcon,
+  InboxIcon,
   InfoIcon,
   LayersIcon,
   ListIcon,
   type LucideIcon,
   RouteIcon,
+  SquareText,
   ServerIcon,
   ShieldIcon,
   SlidersHorizontalIcon,
@@ -55,8 +55,8 @@ const categoryIcons: Record<string, LucideIcon> = {
   endpoint: RouteIcon,
   operation: WorkflowIcon,
   parameter: SlidersHorizontalIcon,
-  request: ArrowUpRightIcon,
-  response: ArrowDownLeftIcon,
+  request: SquareText,
+  response: InboxIcon,
   header: ListIcon,
   schema: BoxIcon,
   security: ShieldIcon,
@@ -268,6 +268,19 @@ type Filters = {
 
 const PAGE_SIZE = 30;
 
+// Every HTTP method OpenAPI allows, in conventional order. The filter always
+// lists all of them, not just the ones present in a given comparison.
+const HTTP_METHODS = [
+  "GET",
+  "POST",
+  "PUT",
+  "PATCH",
+  "DELETE",
+  "HEAD",
+  "OPTIONS",
+  "TRACE",
+];
+
 export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -347,10 +360,16 @@ export function StructuredDiffView({ changes }: StructuredDiffViewProps) {
     { value: "removed", label: "Removed" },
     { value: "modified", label: "Modified" },
   ];
-  const methodItems = [
-    { value: "all", label: "All methods" },
-    ...methods.map((item) => ({ value: item, label: item })),
-  ];
+  const methodItems = useMemo(() => {
+    // Any non-standard method found in the data keeps working: it is listed
+    // after the eight standard ones.
+    const extras = methods.filter((method) => !HTTP_METHODS.includes(method));
+    return [
+      { value: "all", label: "All methods" },
+      ...HTTP_METHODS.map((value) => ({ value, label: value })),
+      ...extras.map((value) => ({ value, label: value })),
+    ];
+  }, [methods]);
 
   function applyFilters(next: Partial<Filters>) {
     const value = { ...filters, ...next };
